@@ -1,7 +1,20 @@
-﻿import axios from "axios";
+import axios from "axios";
+
+// Automatically resolve backend URL for Web, PWA, or Android APK
+const getBaseURL = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return `${import.meta.env.VITE_API_URL}/api/v1`;
+  }
+  // In Capacitor Android native environment (file:// or localhost)
+  if (typeof window !== "undefined" && window.location.protocol === "https:") {
+    return "/api/v1";
+  }
+  // Local development / LAN access
+  return "/api/v1";
+};
 
 const api = axios.create({
-  baseURL: "/api/v1",
+  baseURL: getBaseURL(),
   headers: {
     "Content-Type": "application/json"
   }
