@@ -1,4 +1,4 @@
-﻿from fastapi import FastAPI
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
@@ -7,7 +7,7 @@ from app.core.database import Base, engine
 from app.services.seed import seed
 from app.api import (
     auth, staff, vehicles, drivers, customers, trips, expenses,
-    invoices, dashboard, reports, subscriptions, audit
+    invoices, dashboard, reports, subscriptions, audit, saas_admin
 )
 
 @asynccontextmanager
@@ -45,6 +45,7 @@ app.include_router(dashboard.router, prefix=settings.API_V1_STR)
 app.include_router(reports.router, prefix=settings.API_V1_STR)
 app.include_router(subscriptions.router, prefix=settings.API_V1_STR)
 app.include_router(audit.router, prefix=settings.API_V1_STR)
+app.include_router(saas_admin.router, prefix=settings.API_V1_STR)
 
 @app.get("/")
 def root():

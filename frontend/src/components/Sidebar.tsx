@@ -12,8 +12,8 @@ import {
   CreditCard,
   LogOut,
   ChevronRight,
-  Menu,
-  X
+  X,
+  Layers
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -27,7 +27,19 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ currentTab, setCurrentTab, isOpen, setIsOpen }) => {
   const { user, organization, role, logout, hasPermission } = useAuth();
 
-  const navItems = [
+  const isSuperadmin = user?.is_superadmin || false;
+
+  // SaaS Platform Admin navigation (ONLY for Super Admin)
+  const saasNavItems = [
+    { id: 'saas-dashboard', label: 'SaaS Command Center', icon: LayoutDashboard },
+    { id: 'saas-accounts', label: 'Transport Companies', icon: Building2 },
+    { id: 'saas-plans', label: 'Subscription Tiers', icon: Layers },
+    { id: 'saas-analytics', label: 'Platform Analytics', icon: BarChart3 },
+    { id: 'saas-audit', label: 'Platform Audit Trail', icon: ShieldCheck },
+  ];
+
+  // ERP Operations navigation (ONLY for ERP IDs / Tenant Users)
+  const erpNavItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, module: 'dashboard', action: 'view' },
     { id: 'trips', label: 'Trip Operations', icon: Truck, module: 'trips', action: 'view' },
     { id: 'vehicles', label: 'Fleet Registry', icon: Truck, module: 'vehicles', action: 'view' },
@@ -41,7 +53,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, setCurrentTab, isO
     { id: 'audit', label: 'Audit Trail', icon: Settings, module: 'settings', action: 'view' },
   ];
 
-  const filteredNavItems = navItems.filter(item => hasPermission(item.module, item.action));
+  const filteredErpItems = erpNavItems.filter(item => hasPermission(item.module, item.action));
 
   const [touchStart, setTouchStart] = React.useState<number | null>(null);
 
@@ -53,7 +65,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, setCurrentTab, isO
     if (touchStart === null) return;
     const currentTouch = e.targetTouches[0].clientX;
     const diff = touchStart - currentTouch;
-    // Swiped left by more than 50px -> fold/close sidebar
     if (diff > 50) {
       setIsOpen(false);
       setTouchStart(null);
@@ -87,12 +98,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, setCurrentTab, isO
         {/* Header Branding */}
         <div className="h-16 flex items-center justify-between px-5 border-b border-slate-800">
           <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white shadow-md shadow-blue-500/20">
-              TP
+            <div className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white shadow-md ${
+              isSuperadmin ? 'bg-indigo-600 shadow-indigo-500/20' : 'bg-blue-600 shadow-blue-500/20'
+            }`}>
+              {isSuperadmin ? 'SA' : 'TP'}
             </div>
             <div>
-              <div className="font-bold text-base tracking-wide text-white">TransportPro</div>
-              <div className="text-[11px] text-blue-400 font-medium">Enterprise ERP</div>
+              <div className="font-bold text-base tracking-wide text-white">
+                {isSuperadmin ? 'SaaS Admin' : 'TransportPro'}
+              </div>
+              <div className={`text-[11px] font-medium ${isSuperadmin ? 'text-indigo-400' : 'text-blue-400'}`}>
+                {isSuperadmin ? 'Platform Owner Control' : 'Enterprise ERP'}
+              </div>
             </div>
           </div>
           <button 
@@ -103,8 +120,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, setCurrentTab, isO
           </button>
         </div>
 
-        {/* Company Workspace Badge */}
-        {organization && (
+        {/* Workspace or SuperAdmin Badge */}
+        {isSuperadmin ? (
+          <div className="mx-3 my-3 p-3 rounded-lg bg-indigo-950/70 border border-indigo-700/50 shadow-inner">
+            <div className="text-[10px] uppercase font-bold tracking-wider text-indigo-300">Administrative Access</div>
+            <div className="text-sm font-bold text-white mt-0.5">SaaS Owner Portal</div>
+            <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-indigo-800/60 text-[11px]">
+              <span className="text-indigo-300 font-medium">Platform Super Admin</span>
+              <span className="px-1.5 py-0.5 bg-indigo-500/40 text-indigo-200 rounded font-semibold text-[10px]">
+                SAAS ONLY
+              </span>
+            </div>
+          </div>
+        ) : organization ? (
           <div className="mx-3 my-3 p-2.5 rounded-lg bg-slate-800/80 border border-slate-700/60">
             <div className="text-[10px] uppercase font-semibold tracking-wider text-slate-400">Workspace</div>
             <div className="text-sm font-semibold text-slate-100 truncate">{organization.name}</div>
@@ -117,33 +145,71 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, setCurrentTab, isO
               )}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Navigation Items */}
-        <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
-          {filteredNavItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = currentTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  setCurrentTab(item.id);
-                  setIsOpen(false);
-                }}
-                className="
-                  w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                  
-                "
-              >
-                <div className="flex items-center space-x-3">
-                  <Icon size={18} className={isActive ? 'text-white' : 'text-slate-400'} />
-                  <span>{item.label}</span>
-                </div>
-                {isActive && <ChevronRight size={15} className="text-white/80" />}
-              </button>
-            );
-          })}
+        <nav className="flex-1 px-3 py-2 space-y-2 overflow-y-auto">
+          {/* CASE 1: Super Admin -> ONLY SaaS Admin navigation */}
+          {isSuperadmin ? (
+            <div className="space-y-1">
+              <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider font-bold text-indigo-400">
+                SaaS Platform Controls
+              </div>
+              {saasNavItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = currentTab === item.id || (item.id === 'saas-accounts' && currentTab === 'saas-account-detail');
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      setCurrentTab(item.id);
+                      setIsOpen(false);
+                    }}
+                    className={`
+                      w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-semibold transition-all
+                      ${isActive ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}
+                    `}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <Icon size={18} className={isActive ? 'text-white' : 'text-indigo-400'} />
+                      <span>{item.label}</span>
+                    </div>
+                    {isActive && <ChevronRight size={15} className="text-white/80" />}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            /* CASE 2: ERP ID Login -> ONLY ERP Operations navigation with full explore permission */
+            <div className="space-y-1">
+              <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider font-bold text-slate-400">
+                ERP Operations
+              </div>
+              {filteredErpItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = currentTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      setCurrentTab(item.id);
+                      setIsOpen(false);
+                    }}
+                    className={`
+                      w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                      ${isActive ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}
+                    `}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <Icon size={18} className={isActive ? 'text-white' : 'text-slate-400'} />
+                      <span>{item.label}</span>
+                    </div>
+                    {isActive && <ChevronRight size={15} className="text-white/80" />}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </nav>
 
         {/* User Profile & Logout */}

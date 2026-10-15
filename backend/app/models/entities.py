@@ -50,13 +50,18 @@ class SubscriptionPlan(Base):
     id = Column(String(36), primary_key=True, default=gen_uuid)
     name = Column(String(100), nullable=False) # Starter, Professional, Enterprise
     code = Column(String(50), unique=True, nullable=False)
+    description = Column(Text, nullable=True)
     price_monthly = Column(Float, default=0.0)
     price_yearly = Column(Float, default=0.0)
+    trial_days = Column(Integer, default=14)
     max_vehicles = Column(Integer, default=5)
     max_staff = Column(Integer, default=3)
     max_trips_monthly = Column(Integer, default=50)
     features = Column(JSON, default=list) # e.g. ["basic_reports", "csv_export", "audit_log"]
     is_active = Column(Boolean, default=True)
+    is_visible = Column(Boolean, default=True) # publicly listed on pricing page
+    sort_order = Column(Integer, default=0)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
 
 class Subscription(Base):
     __tablename__ = "subscriptions"
@@ -64,11 +69,18 @@ class Subscription(Base):
     id = Column(String(36), primary_key=True, default=gen_uuid)
     organization_id = Column(String(36), ForeignKey("organizations.id"), unique=True, nullable=False)
     plan_id = Column(String(36), ForeignKey("subscription_plans.id"), nullable=False)
-    status = Column(String(50), default="active") # active, trial, past_due, canceled
+    status = Column(String(50), default="active") # active, trial, past_due, canceled, suspended
     billing_cycle = Column(String(20), default="monthly") # monthly, yearly
     start_date = Column(DateTime(timezone=True), default=utc_now)
+    trial_end_date = Column(DateTime(timezone=True), nullable=True)
     expiry_date = Column(DateTime(timezone=True), nullable=True)
     auto_renew = Column(Boolean, default=True)
+    suspended_at = Column(DateTime(timezone=True), nullable=True)
+    cancelled_at = Column(DateTime(timezone=True), nullable=True)
+    cancellation_reason = Column(Text, nullable=True)
+    admin_notes = Column(Text, nullable=True)
+    amount_paid = Column(Float, default=0.0) # total collected revenue from this org
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
 
     organization = relationship("Organization", back_populates="subscription")
     plan = relationship("SubscriptionPlan")
@@ -327,3 +339,17 @@ class AuditLog(Base):
 
     organization = relationship("Organization", back_populates="audit_logs")
     user = relationship("User")
+
+class SaasAdminNote(Base):
+    """Internal super-admin notes for a tenant org. NEVER exposed to tenant users."""
+    __tablename__ = "saas_admin_notes"
+
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    organization_id = Column(String(36), ForeignKey("organizations.id"), nullable=False, index=True)
+    created_by_user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
+    note = Column(Text, nullable=False)
+    category = Column(String(50), default="general") # general, billing, support, onboarding
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+    created_by = relationship("User")

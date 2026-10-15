@@ -1,4 +1,4 @@
-﻿from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from typing import Optional, Dict, Any
@@ -111,3 +111,14 @@ def require_permission(module: str, action: str):
             )
         return context
     return permission_checker
+
+def require_superadmin(
+    context: CurrentContext = Depends(get_current_context)
+) -> CurrentContext:
+    """Dependency that restricts access to super-admin users only."""
+    if not context.is_superadmin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Super Admin privileges required."
+        )
+    return context

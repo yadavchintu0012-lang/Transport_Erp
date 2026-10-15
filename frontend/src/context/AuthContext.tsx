@@ -1,4 +1,4 @@
-﻿import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
 
 export interface User {
@@ -98,6 +98,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const hasPermission = (module: string, action: string): boolean => {
     if (user?.is_superadmin) return true;
     if (role?.code === 'owner') return true;
+    // Allow exploring and viewing all operational ERP modules
+    if (action === 'view') return true;
     const modulePerms = permissions[module] || [];
     return modulePerms.includes(action);
   };

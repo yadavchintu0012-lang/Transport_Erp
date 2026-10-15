@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Truck, ShieldCheck, ArrowRight, CheckCircle2 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -149,27 +149,34 @@ export const AuthModal: React.FC<{ initialMode?: 'login' | 'register' }> = ({ in
               <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
                 Explore Demo Roles:
               </span>
-              <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+              <div className="grid grid-cols-2 gap-2 text-[11px]">
+                <button
+                  type="button"
+                  onClick={() => fillDemoRole('admin@transportpro.com', 'Admin@123')}
+                  className="p-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg text-center border border-indigo-200 transition-colors"
+                >
+                  ⚡ Super Admin (SaaS)
+                </button>
                 <button
                   type="button"
                   onClick={() => fillDemoRole('owner@apexexpress.com', 'Owner@123')}
-                  className="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium rounded text-center truncate"
+                  className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium rounded-lg text-center transition-colors"
                 >
-                  Owner
+                  🚚 Transport Owner
                 </button>
                 <button
                   type="button"
                   onClick={() => fillDemoRole('accounts@apexexpress.com', 'Accounts@123')}
-                  className="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-medium rounded text-center truncate"
+                  className="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-medium rounded-lg text-center transition-colors"
                 >
-                  Accountant
+                  📊 Accountant
                 </button>
                 <button
                   type="button"
                   onClick={() => fillDemoRole('operator@apexexpress.com', 'Operator@123')}
-                  className="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 font-medium rounded text-center truncate"
+                  className="p-2 bg-amber-50 hover:bg-amber-100 text-amber-700 font-medium rounded-lg text-center transition-colors"
                 >
-                  Trip Operator
+                  📋 Trip Operator
                 </button>
               </div>
             </div>

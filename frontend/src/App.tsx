@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Sidebar } from './components/Sidebar';
 import { TopNavbar } from './components/TopNavbar';
@@ -16,10 +16,32 @@ import { StaffPage } from './pages/StaffPage';
 import { SubscriptionsPage } from './pages/SubscriptionsPage';
 import { AuditPage } from './pages/AuditPage';
 
+// SaaS Admin Pages
+import { SaasDashboard } from './pages/saas/SaasDashboard';
+import { SaasAccountsPage } from './pages/saas/SaasAccountsPage';
+import { SaasAccountDetailPage } from './pages/saas/SaasAccountDetailPage';
+import { SaasPlansPage } from './pages/saas/SaasPlansPage';
+import { SaasAnalyticsPage } from './pages/saas/SaasAnalyticsPage';
+import { SaasAuditLogsPage } from './pages/saas/SaasAuditLogsPage';
+
 const AppContent: React.FC = () => {
   const { user, isLoading } = useAuth();
   const [currentTab, setCurrentTab] = useState('dashboard');
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Auto-switch tabs strictly depending on user role
+  useEffect(() => {
+    if (user?.is_superadmin) {
+      if (!currentTab.startsWith('saas-')) {
+        setCurrentTab('saas-dashboard');
+      }
+    } else if (user) {
+      if (currentTab.startsWith('saas-')) {
+        setCurrentTab('dashboard');
+      }
+    }
+  }, [user]);
 
   if (isLoading) {
     return (
@@ -35,6 +57,14 @@ const AppContent: React.FC = () => {
 
   const getPageTitle = () => {
     switch (currentTab) {
+      // SaaS Admin Tabs
+      case 'saas-dashboard': return 'SaaS Owner Command Center & Metrics';
+      case 'saas-accounts': return 'Transport Companies & Accounts Directory';
+      case 'saas-account-detail': return 'Transport Business Account Profile';
+      case 'saas-plans': return 'SaaS Subscription Tiers & Packaging';
+      case 'saas-analytics': return 'Platform Analytics & Growth';
+      case 'saas-audit': return 'Platform Administrative Audit Trail';
+      // Standard ERP Tabs
       case 'dashboard': return 'Executive Dashboard';
       case 'trips': return 'Trip Operations & Dispatch';
       case 'vehicles': return 'Fleet & Equipment Registry';
@@ -64,17 +94,46 @@ const AppContent: React.FC = () => {
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         />
         <main className="flex-1 overflow-y-auto">
-          {currentTab === 'dashboard' && <Dashboard onNavigateTab={(tab) => setCurrentTab(tab)} />}
-          {currentTab === 'trips' && <TripsPage />}
-          {currentTab === 'vehicles' && <VehiclesPage />}
-          {currentTab === 'drivers' && <DriversPage />}
-          {currentTab === 'customers' && <CustomersPage />}
-          {currentTab === 'expenses' && <ExpensesPage />}
-          {currentTab === 'invoices' && <InvoicesPage />}
-          {currentTab === 'reports' && <ReportsPage />}
-          {currentTab === 'staff' && <StaffPage />}
-          {currentTab === 'subscriptions' && <SubscriptionsPage />}
-          {currentTab === 'audit' && <AuditPage />}
+          {/* SaaS Admin Views (ONLY FOR SUPER ADMIN) */}
+          {user.is_superadmin && (
+            <>
+              {currentTab === 'saas-dashboard' && <SaasDashboard onNavigateTab={(tab) => setCurrentTab(tab)} />}
+              {currentTab === 'saas-accounts' && (
+                <SaasAccountsPage
+                  onSelectAccount={(orgId) => {
+                    setSelectedAccountId(orgId);
+                    setCurrentTab('saas-account-detail');
+                  }}
+                />
+              )}
+              {currentTab === 'saas-account-detail' && selectedAccountId && (
+                <SaasAccountDetailPage
+                  orgId={selectedAccountId}
+                  onBack={() => setCurrentTab('saas-accounts')}
+                />
+              )}
+              {currentTab === 'saas-plans' && <SaasPlansPage />}
+              {currentTab === 'saas-analytics' && <SaasAnalyticsPage />}
+              {currentTab === 'saas-audit' && <SaasAuditLogsPage />}
+            </>
+          )}
+
+          {/* ERP Operational Views (ONLY FOR ERP / TENANT USERS) */}
+          {!user.is_superadmin && (
+            <>
+              {currentTab === 'dashboard' && <Dashboard onNavigateTab={(tab) => setCurrentTab(tab)} />}
+              {currentTab === 'trips' && <TripsPage />}
+              {currentTab === 'vehicles' && <VehiclesPage />}
+              {currentTab === 'drivers' && <DriversPage />}
+              {currentTab === 'customers' && <CustomersPage />}
+              {currentTab === 'expenses' && <ExpensesPage />}
+              {currentTab === 'invoices' && <InvoicesPage />}
+              {currentTab === 'reports' && <ReportsPage />}
+              {currentTab === 'staff' && <StaffPage />}
+              {currentTab === 'subscriptions' && <SubscriptionsPage />}
+              {currentTab === 'audit' && <AuditPage />}
+            </>
+          )}
         </main>
       </div>
     </div>
