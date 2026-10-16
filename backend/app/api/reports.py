@@ -17,8 +17,16 @@ def export_trips_csv(
     end_date: Optional[datetime] = None,
     status: Optional[str] = None,
     db: Session = Depends(get_db),
-    context: CurrentContext = Depends(require_permission("reports", "export"))
+    context: CurrentContext = Depends(get_current_context)
 ):
+    if not (
+        context.is_superadmin or 
+        (context.role and context.role.code == "owner") or 
+        "export" in context.permissions.get("reports", []) or 
+        "export" in context.permissions.get("trips", [])
+    ):
+        raise HTTPException(status_code=403, detail="Permission denied to export trips CSV")
+
     query = db.query(Trip).filter(Trip.organization_id == context.organization_id)
     if start_date:
         query = query.filter(Trip.trip_date >= start_date)

@@ -186,8 +186,37 @@ export const TripsPage: React.FC = () => {
     }
   };
 
-  const handleExportCSV = () => {
-    window.open('/api/v1/reports/trips-csv', '_blank');
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportCSV = async () => {
+    setIsExporting(true);
+    try {
+      const params: any = {};
+      if (statusFilter) params.status = statusFilter;
+      if (startDate) params.start_date = new Date(startDate + 'T00:00:00').toISOString();
+      if (endDate) params.end_date = new Date(endDate + 'T23:59:59').toISOString();
+
+      const res = await api.get('/reports/trips-csv', {
+        params,
+        responseType: 'blob'
+      });
+
+      const blob = new Blob([res.data], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const dateStr = new Date().toISOString().slice(0, 10);
+      link.setAttribute('download', `trips_export_${dateStr}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error('Failed to export trips CSV', err);
+      alert(err.response?.data?.detail || 'Failed to download trips CSV.');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const totalCalculated = Math.max(
@@ -208,10 +237,11 @@ export const TripsPage: React.FC = () => {
           {canExport && (
             <button
               onClick={handleExportCSV}
-              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 text-xs font-semibold"
+              disabled={isExporting}
+              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 text-xs font-semibold disabled:opacity-50"
             >
-              <Download size={14} />
-              <span>Export CSV</span>
+              <Download size={14} className={isExporting ? 'animate-bounce' : ''} />
+              <span>{isExporting ? 'Exporting...' : 'Export CSV'}</span>
             </button>
           )}
           {canCreate && (

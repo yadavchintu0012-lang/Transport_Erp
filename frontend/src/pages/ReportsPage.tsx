@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart3, Download, TrendingUp, IndianRupee, FileText } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -28,8 +28,28 @@ export const ReportsPage: React.FC = () => {
     fetchPL();
   }, []);
 
-  const handleExportTrips = () => {
-    window.open('/api/v1/reports/trips-csv', '_blank');
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportTrips = async () => {
+    setIsExporting(true);
+    try {
+      const res = await api.get('/reports/trips-csv', { responseType: 'blob' });
+      const blob = new Blob([res.data], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const dateStr = new Date().toISOString().slice(0, 10);
+      link.setAttribute('download', `trips_all_${dateStr}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error('Failed to export trips CSV', err);
+      alert(err.response?.data?.detail || 'Failed to download trips CSV.');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
@@ -41,10 +61,11 @@ export const ReportsPage: React.FC = () => {
         </div>
         <button
           onClick={handleExportTrips}
-          className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs"
+          disabled={isExporting}
+          className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs disabled:opacity-50"
         >
-          <Download size={14} />
-          <span>Download All Trips CSV</span>
+          <Download size={14} className={isExporting ? 'animate-bounce' : ''} />
+          <span>{isExporting ? 'Downloading...' : 'Download All Trips CSV'}</span>
         </button>
       </div>
 
