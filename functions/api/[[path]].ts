@@ -1,6 +1,6 @@
 export const onRequest = async (context: any) => {
   const url = new URL(context.request.url);
-  const backendBase = "https://syndication-ready-socks-piece.trycloudflare.com";
+  const backendBase = "https://spending-discounted-academics-bookmark.trycloudflare.com";
   const targetUrl = `${backendBase}${url.pathname}${url.search}`;
   
   // Forward request with headers and body

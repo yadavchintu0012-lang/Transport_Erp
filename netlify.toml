@@ -7,7 +7,7 @@
 
 [[redirects]]
   from = "/api/*"
-  to = "https://syndication-ready-socks-piece.trycloudflare.com/api/:splat"
+  to = "https://spending-discounted-academics-bookmark.trycloudflare.com/api/:splat"
   status = 200
   force = true
 
