@@ -11,13 +11,13 @@ const getBaseURL = () => {
     const raw = customUrl.trim().replace(/\/+$/, '');
     return raw.endsWith('/api/v1') ? raw : `${raw}/api/v1`;
   }
-  // If running on Netlify, mobile, or remote domain, connect to the active backend tunnel
+  // If running in Android / iOS native Capacitor wrapper
   if (typeof window !== "undefined") {
-    const host = window.location.hostname;
-    if (host.includes("netlify.app") || window.location.protocol === "capacitor:" || (window as any).Capacitor?.isNativePlatform?.()) {
-      return "https://truly-sense-roulette-tvs.trycloudflare.com/api/v1";
+    if (window.location.protocol === "capacitor:" || (window as any).Capacitor?.isNativePlatform?.()) {
+      return "https://transportproo.netlify.app/api/v1";
     }
   }
+  // Standard Web deployment (Netlify, Cloudflare Pages, Vite Dev, etc.) uses relative proxy
   return "/api/v1";
 };
 
