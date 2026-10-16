@@ -6,6 +6,15 @@ const getBaseURL = () => {
     const raw = String(import.meta.env.VITE_API_URL).trim().replace(/\/+$/, '');
     return raw.endsWith('/api/v1') ? raw : `${raw}/api/v1`;
   }
+  const customUrl = typeof window !== "undefined" ? localStorage.getItem("custom_api_url") : null;
+  if (customUrl) {
+    const raw = customUrl.trim().replace(/\/+$/, '');
+    return raw.endsWith('/api/v1') ? raw : `${raw}/api/v1`;
+  }
+  // If running inside Capacitor Native Android App
+  if (typeof window !== "undefined" && (window.location.protocol === "capacitor:" || (window as any).Capacitor?.isNativePlatform?.())) {
+    return "https://looks-gates-tied-summer.trycloudflare.com/api/v1";
+  }
   return "/api/v1";
 };
 
