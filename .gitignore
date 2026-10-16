@@ -44,8 +44,9 @@ frontend/dist-ssr/
 .idea/
 *.sublime-project
 *.sublime-workspace
-.DS_Store
+*.DS_Store
 Thumbs.db
+*.exe
 
 # Temporary scratch scripts
 fix_*.py
