@@ -1,5 +1,5 @@
 // TransportPro ERP - PWA Service Worker for Offline & Mobile Caching
-const CACHE_NAME = 'transportpro-cache-v2';
+const CACHE_NAME = 'transportpro-cache-v3';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -40,6 +40,16 @@ self.addEventListener('fetch', (event) => {
   if (event.request.url.includes('/api/')) {
     return;
   }
+
+  // Navigation requests: Always Network-First so latest deployment loads immediately
+  if (event.request.mode === 'navigate' || event.request.destination === 'document') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match('/index.html'))
+    );
+    return;
+  }
+
+  // Static assets: Cache-first with network fallback
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       return cachedResponse || fetch(event.request);
