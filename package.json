@@ -1,0 +1,7 @@
+{
+  "name": "transport-erp-root",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix frontend run build"
+  }
+}
