@@ -2,6 +2,6 @@
   "name": "transport-erp-root",
   "private": true,
   "scripts": {
-    "build": "npm --prefix frontend run build"
+    "build": "cd frontend && npm install && npm run build"
   }
 }
