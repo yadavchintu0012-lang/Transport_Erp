@@ -39,7 +39,8 @@ export const AuthModal: React.FC<{ initialMode?: 'login' | 'register' }> = ({ in
         res.data.permissions
       );
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Invalid email or password');
+      const msg = err.response?.data?.detail || (err.message === 'Network Error' ? 'Cannot reach backend server. Please check connection.' : (err.message || 'Invalid email or password'));
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -67,7 +68,8 @@ export const AuthModal: React.FC<{ initialMode?: 'login' | 'register' }> = ({ in
         res.data.permissions
       );
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Registration failed');
+      const msg = err.response?.data?.detail || (err.message === 'Network Error' ? 'Cannot reach backend server. Please check connection.' : (err.message || 'Registration failed'));
+      setError(msg);
     } finally {
       setLoading(false);
     }

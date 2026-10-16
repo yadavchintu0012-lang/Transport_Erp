@@ -11,9 +11,12 @@ const getBaseURL = () => {
     const raw = customUrl.trim().replace(/\/+$/, '');
     return raw.endsWith('/api/v1') ? raw : `${raw}/api/v1`;
   }
-  // If running inside Capacitor Native Android App
-  if (typeof window !== "undefined" && (window.location.protocol === "capacitor:" || (window as any).Capacitor?.isNativePlatform?.())) {
-    return "https://looks-gates-tied-summer.trycloudflare.com/api/v1";
+  // If running on Netlify, mobile, or remote domain, connect to the active backend tunnel
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host.includes("netlify.app") || window.location.protocol === "capacitor:" || (window as any).Capacitor?.isNativePlatform?.()) {
+      return "https://truly-sense-roulette-tvs.trycloudflare.com/api/v1";
+    }
   }
   return "/api/v1";
 };
