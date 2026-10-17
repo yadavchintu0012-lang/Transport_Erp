@@ -44,12 +44,50 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [organization, setOrganization] = useState<Organization | null>(null);
-  const [role, setRole] = useState<Role | null>(null);
-  const [permissions, setPermissions] = useState<Record<string, string[]>>({});
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
-  const [isLoading, setIsLoading] = useState(true);
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
+
+  const [user, setUser] = useState<User | null>(() => {
+    try {
+      const saved = localStorage.getItem('user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [organization, setOrganization] = useState<Organization | null>(() => {
+    try {
+      const saved = localStorage.getItem('organization');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [role, setRole] = useState<Role | null>(() => {
+    try {
+      const saved = localStorage.getItem('role');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [permissions, setPermissions] = useState<Record<string, string[]>>(() => {
+    try {
+      const saved = localStorage.getItem('permissions');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  // Only display full-screen loading if a token is present but user profile is not yet loaded
+  const [isLoading, setIsLoading] = useState<boolean>(() => {
+    const hasToken = !!localStorage.getItem('token');
+    const hasUser = !!localStorage.getItem('user');
+    return hasToken && !hasUser;
+  });
 
   useEffect(() => {
     const fetchMe = async () => {
@@ -61,9 +99,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setOrganization(res.data.organization);
           setRole(res.data.role);
           setPermissions(res.data.permissions || {});
-        } catch (err) {
-          console.error('Session expired or invalid', err);
-          logout();
+
+          // Persist user and session info
+          localStorage.setItem('user', JSON.stringify(res.data.user));
+          if (res.data.organization) {
+            localStorage.setItem('organization', JSON.stringify(res.data.organization));
+          } else {
+            localStorage.removeItem('organization');
+          }
+          if (res.data.role) {
+            localStorage.setItem('role', JSON.stringify(res.data.role));
+          } else {
+            localStorage.removeItem('role');
+          }
+          localStorage.setItem('permissions', JSON.stringify(res.data.permissions || {}));
+        } catch (err: any) {
+          const status = err?.response?.status;
+          // ONLY log out if backend returns 401 Unauthorized
+          // Never log out on temporary backend cold starts, network errors, 502/503/504
+          if (status === 401) {
+            console.warn('Session expired or unauthorized, logging out');
+            logout();
+          } else {
+            console.warn('Backend updating or waking up, retaining saved session');
+          }
         }
       }
       setIsLoading(false);
@@ -79,15 +138,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     newPerms: Record<string, string[]>
   ) => {
     localStorage.setItem('token', newToken);
+    localStorage.setItem('user', JSON.stringify(newUser));
+    if (newOrg) {
+      localStorage.setItem('organization', JSON.stringify(newOrg));
+    } else {
+      localStorage.removeItem('organization');
+    }
+    if (newRole) {
+      localStorage.setItem('role', JSON.stringify(newRole));
+    } else {
+      localStorage.removeItem('role');
+    }
+    localStorage.setItem('permissions', JSON.stringify(newPerms || {}));
+
     setToken(newToken);
     setUser(newUser);
     setOrganization(newOrg);
     setRole(newRole);
-    setPermissions(newPerms);
+    setPermissions(newPerms || {});
   };
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('organization');
+    localStorage.removeItem('role');
+    localStorage.removeItem('permissions');
     setToken(null);
     setUser(null);
     setOrganization(null);

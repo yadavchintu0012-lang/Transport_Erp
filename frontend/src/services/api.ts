@@ -40,13 +40,14 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      localStorage.removeItem("organization");
-      localStorage.removeItem("role");
-      localStorage.removeItem("permissions");
-      if (window.location.pathname !== "/login") {
-        window.location.href = "/login";
+      const url = error.config?.url || '';
+      // Don't wipe session if user merely typed the wrong password on login/register
+      if (!url.includes('/auth/login') && !url.includes('/auth/register')) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("organization");
+        localStorage.removeItem("role");
+        localStorage.removeItem("permissions");
       }
     }
     return Promise.reject(error);
