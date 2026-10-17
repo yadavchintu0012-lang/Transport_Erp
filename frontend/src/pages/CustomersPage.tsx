@@ -1,5 +1,5 @@
-﻿import React, { useState, useEffect } from 'react';
-import { Building2, Plus, Search, FileText, Phone, MapPin } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Building2, Plus, Search, FileText, Phone, MapPin, Pencil, Trash2 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -9,6 +9,7 @@ export const CustomersPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingCustomerId, setEditingCustomerId] = useState<string | null>(null);
   const [selectedStatement, setSelectedStatement] = useState<any>(null);
 
   const [formData, setFormData] = useState({
@@ -26,6 +27,8 @@ export const CustomersPage: React.FC = () => {
   });
 
   const canCreate = hasPermission('customers', 'create');
+  const canEdit = hasPermission('customers', 'edit');
+  const canDelete = hasPermission('customers', 'delete');
 
   const fetchCustomers = async () => {
     setLoading(true);
@@ -43,11 +46,46 @@ export const CustomersPage: React.FC = () => {
     fetchCustomers();
   }, []);
 
+  const handleOpenEdit = (c: any) => {
+    setEditingCustomerId(c.id);
+    setFormData({
+      name: c.name || '',
+      customer_type: c.customer_type || 'business',
+      contact_person: c.contact_person || '',
+      phone: c.phone || '',
+      email: c.email || '',
+      billing_address: c.billing_address || '',
+      city: c.city || '',
+      state: c.state || '',
+      tax_number: c.tax_number || '',
+      credit_limit: c.credit_limit || 0,
+      opening_balance: c.opening_balance || 0
+    });
+    setShowAddModal(true);
+  };
+
+  const handleDelete = async (customerId: string, customerName: string) => {
+    if (!window.confirm(`Are you sure you want to delete customer "${customerName}"?`)) {
+      return;
+    }
+    try {
+      await api.delete('/customers/' + customerId);
+      fetchCustomers();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Error deleting customer');
+    }
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.post('/customers/', formData);
+      if (editingCustomerId) {
+        await api.put('/customers/' + editingCustomerId, formData);
+      } else {
+        await api.post('/customers/', formData);
+      }
       setShowAddModal(false);
+      setEditingCustomerId(null);
       fetchCustomers();
     } catch (err: any) {
       alert(err.response?.data?.detail || 'Error saving customer');
@@ -129,6 +167,31 @@ export const CustomersPage: React.FC = () => {
                 <span className="font-bold text-rose-600">INR {c.outstanding_balance.toLocaleString('en-IN')}</span>
               </div>
             </div>
+
+            {/* Edit / Delete actions */}
+            <div className="flex items-center justify-end space-x-1.5 pt-2 border-t border-slate-100">
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={() => handleOpenEdit(c)}
+                  className="flex items-center space-x-1 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                  title="Edit Customer Details"
+                >
+                  <Pencil size={12} />
+                  <span>Edit</span>
+                </button>
+              )}
+              {canDelete && (
+                <button
+                  type="button"
+                  onClick={() => handleDelete(c.id, c.name)}
+                  className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition-colors cursor-pointer"
+                  title="Delete Customer"
+                >
+                  <Trash2 size={14} />
+                </button>
+              )}
+            </div>
           </div>
         ))}
       </div>
@@ -174,13 +237,15 @@ export const CustomersPage: React.FC = () => {
         </div>
       )}
 
-      {/* Add Modal */}
+      {/* Add / Edit Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4 text-slate-900">
             <div className="flex justify-between items-center border-b pb-3">
-              <h3 className="text-base font-bold text-slate-800">Register New Customer</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-600">&times;</button>
+              <h3 className="text-base font-bold text-slate-800">
+                {editingCustomerId ? 'Edit Customer Account' : 'Register New Customer'}
+              </h3>
+              <button onClick={() => { setShowAddModal(false); setEditingCustomerId(null); }} className="text-slate-400 hover:text-slate-600">&times;</button>
             </div>
             <form onSubmit={handleCreate} className="space-y-3 text-xs">
               <div>
@@ -238,16 +303,16 @@ export const CustomersPage: React.FC = () => {
               <div className="flex justify-end space-x-2 pt-3 border-t">
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 border rounded-lg text-slate-600"
+                  onClick={() => { setShowAddModal(false); setEditingCustomerId(null); }}
+                  className="px-4 py-2 border rounded-lg text-slate-600 hover:bg-slate-50 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm cursor-pointer"
                 >
-                  Save Customer
+                  {editingCustomerId ? 'Update Customer' : 'Save Customer'}
                 </button>
               </div>
             </form>

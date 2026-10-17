@@ -1,4 +1,4 @@
-﻿from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from typing import Optional
@@ -107,6 +107,30 @@ def update_customer(
     db.commit()
     log_audit(db, "customer_update", context.organization_id, context.user.id, "Customer", c.id)
     return {"message": "Customer updated successfully"}
+
+@router.delete("/{customer_id}")
+def delete_customer(
+    customer_id: str,
+    db: Session = Depends(get_db),
+    context: CurrentContext = Depends(require_permission("customers", "delete"))
+):
+    c = db.query(Customer).filter(
+        Customer.id == customer_id,
+        Customer.organization_id == context.organization_id
+    ).first()
+    if not c:
+        raise HTTPException(status_code=404, detail="Customer not found.")
+
+    # Check if customer has any trips
+    trips_count = db.query(Trip).filter(Trip.customer_id == customer_id).count()
+    if trips_count > 0:
+        raise HTTPException(status_code=400, detail="Cannot delete customer with historical trip records. Mark customer status as inactive instead.")
+
+    cust_name = c.name
+    db.delete(c)
+    db.commit()
+    log_audit(db, "customer_delete", context.organization_id, context.user.id, "Customer", customer_id, {"name": cust_name})
+    return {"message": "Customer deleted successfully"}
 
 @router.get("/{customer_id}/statement")
 def get_customer_statement(

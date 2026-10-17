@@ -1,5 +1,5 @@
-﻿import React, { useState, useEffect } from 'react';
-import { Truck, Plus, Search, AlertCircle, Calendar, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Truck, Plus, Search, AlertCircle, Calendar, ShieldCheck, Pencil, Trash2 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -9,6 +9,7 @@ export const VehiclesPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingVehicleId, setEditingVehicleId] = useState<string | null>(null);
   const [drivers, setDrivers] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
@@ -25,6 +26,8 @@ export const VehiclesPage: React.FC = () => {
   });
 
   const canCreate = hasPermission('vehicles', 'create');
+  const canEdit = hasPermission('vehicles', 'edit');
+  const canDelete = hasPermission('vehicles', 'delete');
 
   const fetchVehicles = async () => {
     setLoading(true);
@@ -52,18 +55,55 @@ export const VehiclesPage: React.FC = () => {
     fetchDrivers();
   }, []);
 
+  const handleOpenEdit = (v: any) => {
+    setEditingVehicleId(v.id);
+    setFormData({
+      vehicle_number: v.vehicle_number || '',
+      vehicle_type: v.vehicle_type || 'Truck',
+      model: v.model || '',
+      capacity_tonnage: v.capacity_tonnage || 0,
+      ownership_type: v.ownership_type || 'owned',
+      assigned_driver_id: v.assigned_driver?.id || v.assigned_driver_id || '',
+      insurance_expiry: v.insurance_expiry ? v.insurance_expiry.split('T')[0] : '',
+      fitness_expiry: v.fitness_expiry ? v.fitness_expiry.split('T')[0] : '',
+      permit_expiry: v.permit_expiry ? v.permit_expiry.split('T')[0] : '',
+      pollution_expiry: v.pollution_expiry ? v.pollution_expiry.split('T')[0] : ''
+    });
+    setShowAddModal(true);
+  };
+
+  const handleDelete = async (vehicleId: string, vehicleNumber: string) => {
+    if (!window.confirm(`Are you sure you want to delete vehicle "${vehicleNumber}"?`)) {
+      return;
+    }
+    try {
+      await api.delete('/vehicles/' + vehicleId);
+      fetchVehicles();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Error deleting vehicle');
+    }
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.post('/vehicles/', {
+      const payload = {
         ...formData,
         insurance_expiry: formData.insurance_expiry ? new Date(formData.insurance_expiry).toISOString() : null,
         fitness_expiry: formData.fitness_expiry ? new Date(formData.fitness_expiry).toISOString() : null,
         permit_expiry: formData.permit_expiry ? new Date(formData.permit_expiry).toISOString() : null,
         pollution_expiry: formData.pollution_expiry ? new Date(formData.pollution_expiry).toISOString() : null,
         assigned_driver_id: formData.assigned_driver_id || null
-      });
+      };
+
+      if (editingVehicleId) {
+        await api.put('/vehicles/' + editingVehicleId, payload);
+      } else {
+        await api.post('/vehicles/', payload);
+      }
+
       setShowAddModal(false);
+      setEditingVehicleId(null);
       fetchVehicles();
     } catch (err: any) {
       alert(err.response?.data?.detail || 'Error saving vehicle');
@@ -138,16 +178,43 @@ export const VehiclesPage: React.FC = () => {
                 <span className="font-medium">{v.fitness_expiry ? new Date(v.fitness_expiry).toLocaleDateString() : 'N/A'}</span>
               </div>
             </div>
+
+            {/* Edit / Delete actions */}
+            <div className="flex items-center justify-end space-x-1.5 pt-2 border-t border-slate-100">
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={() => handleOpenEdit(v)}
+                  className="flex items-center space-x-1 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                  title="Edit Vehicle Details"
+                >
+                  <Pencil size={12} />
+                  <span>Edit</span>
+                </button>
+              )}
+              {canDelete && (
+                <button
+                  type="button"
+                  onClick={() => handleDelete(v.id, v.vehicle_number)}
+                  className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition-colors cursor-pointer"
+                  title="Delete Vehicle"
+                >
+                  <Trash2 size={14} />
+                </button>
+              )}
+            </div>
           </div>
         ))}
       </div>
 
       {showAddModal && (
         <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4 text-slate-900">
             <div className="flex justify-between items-center border-b pb-3">
-              <h3 className="text-base font-bold text-slate-800">Register New Vehicle</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-600">&times;</button>
+              <h3 className="text-base font-bold text-slate-800">
+                {editingVehicleId ? 'Edit Vehicle Details' : 'Register New Vehicle'}
+              </h3>
+              <button onClick={() => { setShowAddModal(false); setEditingVehicleId(null); }} className="text-slate-400 hover:text-slate-600">&times;</button>
             </div>
             <form onSubmit={handleCreate} className="space-y-3 text-xs">
               <div>
@@ -207,16 +274,16 @@ export const VehiclesPage: React.FC = () => {
               <div className="flex justify-end space-x-2 pt-3 border-t">
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 border rounded-lg text-slate-600"
+                  onClick={() => { setShowAddModal(false); setEditingVehicleId(null); }}
+                  className="px-4 py-2 border rounded-lg text-slate-600 hover:bg-slate-50 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm cursor-pointer"
                 >
-                  Save Vehicle
+                  {editingVehicleId ? 'Update Vehicle' : 'Save Vehicle'}
                 </button>
               </div>
             </form>

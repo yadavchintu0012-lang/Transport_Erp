@@ -1,5 +1,5 @@
 // TransportPro ERP - PWA Service Worker for Offline & Mobile Caching
-const CACHE_NAME = 'transportpro-cache-v4';
+const CACHE_NAME = 'transportpro-cache-v5';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',

@@ -10,7 +10,9 @@ import {
   Calendar,
   Filter,
   X,
-  RefreshCw
+  RefreshCw,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -36,6 +38,9 @@ export const TripsPage: React.FC = () => {
   // Invoice modal state
   const [invoiceData, setInvoiceData] = useState<any>(null);
 
+  // Edit trip state
+  const [editingTripId, setEditingTripId] = useState<string | null>(null);
+
   // Form state
   const [formData, setFormData] = useState({
     trip_date: new Date().toISOString().split('T')[0],
@@ -60,6 +65,8 @@ export const TripsPage: React.FC = () => {
   });
 
   const canCreate = hasPermission('trips', 'create');
+  const canEdit = hasPermission('trips', 'edit');
+  const canDelete = hasPermission('trips', 'delete');
   const canApprove = hasPermission('trips', 'approve');
   const canExport = hasPermission('trips', 'export');
 
@@ -127,14 +134,62 @@ export const TripsPage: React.FC = () => {
     }
   };
 
+  const handleOpenEditTrip = (t: any) => {
+    setEditingTripId(t.id);
+    setFormData({
+      trip_date: t.trip_date ? t.trip_date.split('T')[0] : new Date().toISOString().split('T')[0],
+      customer_id: t.customer?.id || t.customer_id || '',
+      vehicle_id: t.vehicle?.id || t.vehicle_id || '',
+      driver_id: t.driver?.id || t.driver_id || '',
+      customer_po_ref: t.customer_po_ref || '',
+      pickup_city: t.route?.pickup_city || t.pickup_city || '',
+      delivery_city: t.route?.delivery_city || t.delivery_city || '',
+      cargo_description: t.cargo?.description || t.cargo_description || '',
+      cargo_weight_tonnes: t.cargo?.weight_tonnes !== undefined ? t.cargo.weight_tonnes : (t.cargo_weight_tonnes || 0),
+      freight_charges: t.financials?.freight_charges !== undefined ? t.financials.freight_charges : (t.freight_charges || 0),
+      additional_charges: t.financials?.additional_charges !== undefined ? t.financials.additional_charges : (t.additional_charges || 0),
+      discount: t.financials?.discount !== undefined ? t.financials.discount : (t.discount || 0),
+      tax_amount: t.financials?.tax_amount !== undefined ? t.financials.tax_amount : (t.tax_amount || 0),
+      amount_paid: t.financials?.amount_paid !== undefined ? t.financials.amount_paid : (t.amount_paid || 0),
+      diesel_expense: t.diesel_expense || 0,
+      toll_expense: t.toll_expense || 0,
+      driver_allowance: t.driver_allowance || 0,
+      loading_unloading_expense: t.loading_unloading_expense || 0,
+      other_direct_expense: t.other_direct_expense || 0
+    });
+    setShowAddModal(true);
+  };
+
+  const handleDeleteTrip = async (tripId: string, tripNumber: string) => {
+    if (!window.confirm(`Are you sure you want to delete Trip "${tripNumber}"? This will release the vehicle/driver and remove any linked vouchers.`)) {
+      return;
+    }
+    try {
+      await api.delete('/trips/' + tripId);
+      fetchTrips();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Error deleting trip');
+    }
+  };
+
   const handleCreateTrip = async (e: React.FormEvent, andGenerateInvoice = false) => {
     e.preventDefault();
     try {
-      const res = await api.post('/trips/', {
+      const payload = {
         ...formData,
         trip_date: new Date(formData.trip_date).toISOString()
-      });
+      };
+
+      let tripId = editingTripId;
+      if (editingTripId) {
+        await api.put('/trips/' + editingTripId, payload);
+      } else {
+        const res = await api.post('/trips/', payload);
+        tripId = res.data?.id;
+      }
+
       setShowAddModal(false);
+      setEditingTripId(null);
       fetchTrips();
 
       // Reset form
@@ -160,11 +215,11 @@ export const TripsPage: React.FC = () => {
         other_direct_expense: 0
       });
 
-      if (andGenerateInvoice && res.data?.id) {
-        handleOpenInvoice(res.data.id);
+      if (andGenerateInvoice && tripId) {
+        handleOpenInvoice(tripId);
       }
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Error creating trip');
+      alert(err.response?.data?.detail || 'Error saving trip');
     }
   };
 
@@ -514,6 +569,29 @@ export const TripsPage: React.FC = () => {
                           <FileText size={12} />
                           <span>Invoice</span>
                         </button>
+
+                        {/* Edit Trip button */}
+                        {canEdit && (
+                          <button
+                            onClick={() => handleOpenEditTrip(t)}
+                            className="flex items-center space-x-1 px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[11px] font-semibold border border-slate-200 transition-colors cursor-pointer"
+                            title="Edit Trip Details"
+                          >
+                            <Pencil size={11} />
+                            <span>Edit</span>
+                          </button>
+                        )}
+
+                        {/* Delete Trip button */}
+                        {canDelete && (
+                          <button
+                            onClick={() => handleDeleteTrip(t.id, t.trip_number)}
+                            className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded transition-colors cursor-pointer"
+                            title="Delete Trip"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
                       </div>
 
                       {/* Quick Status Changers */}
@@ -558,13 +636,17 @@ export const TripsPage: React.FC = () => {
           <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-4">
             <div className="flex justify-between items-center border-b pb-3">
               <div>
-                <h3 className="text-base font-bold text-slate-800">Create New Trip Entry</h3>
-                <p className="text-xs text-slate-500">Record consignment details, assign vehicle & driver, and generate instant invoice.</p>
+                <h3 className="text-base font-bold text-slate-800">
+                  {editingTripId ? 'Edit Trip Entry' : 'Create New Trip Entry'}
+                </h3>
+                <p className="text-xs text-slate-500">
+                  {editingTripId ? 'Update consignment details, financial figures, or driver assignment.' : 'Record consignment details, assign vehicle & driver, and generate instant invoice.'}
+                </p>
               </div>
-              <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-600">&times;</button>
+              <button onClick={() => { setShowAddModal(false); setEditingTripId(null); }} className="text-slate-400 hover:text-slate-600">&times;</button>
             </div>
 
-            <form onSubmit={(e) => handleCreateTrip(e, false)} className="space-y-4 text-xs">
+            <form onSubmit={(e) => handleCreateTrip(e, false)} className="space-y-4 text-xs text-slate-900">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="font-semibold text-slate-700">Trip Date *</label>
@@ -805,25 +887,25 @@ export const TripsPage: React.FC = () => {
               <div className="flex flex-col sm:flex-row justify-between gap-2 pt-3 border-t">
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 border rounded-lg text-slate-600 hover:bg-slate-50"
+                  onClick={() => { setShowAddModal(false); setEditingTripId(null); }}
+                  className="px-4 py-2 border rounded-lg text-slate-600 hover:bg-slate-50 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <div className="flex items-center space-x-2">
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-lg"
+                    className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-lg cursor-pointer"
                   >
-                    Confirm & Dispatch
+                    {editingTripId ? 'Save & Update Trip' : 'Confirm & Dispatch'}
                   </button>
                   <button
                     type="button"
                     onClick={(e) => handleCreateTrip(e, true)}
-                    className="flex items-center space-x-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm"
+                    className="flex items-center space-x-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm cursor-pointer"
                   >
                     <FileText size={15} />
-                    <span>Dispatch & Generate Invoice</span>
+                    <span>{editingTripId ? 'Update & View Invoice' : 'Dispatch & Generate Invoice'}</span>
                   </button>
                 </div>
               </div>

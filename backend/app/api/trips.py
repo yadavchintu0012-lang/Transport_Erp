@@ -286,6 +286,79 @@ def approve_trip(
     log_audit(db, "trip_approve", context.organization_id, context.user.id, "Trip", trip.id)
     return {"message": "Trip approved successfully"}
 
+@router.put("/{trip_id}")
+def update_trip(
+    trip_id: str,
+    data: TripUpdateRequest,
+    db: Session = Depends(get_db),
+    context: CurrentContext = Depends(require_permission("trips", "edit"))
+):
+    trip = db.query(Trip).filter(
+        Trip.id == trip_id,
+        Trip.organization_id == context.organization_id
+    ).first()
+    if not trip:
+        raise HTTPException(status_code=404, detail="Trip not found.")
+
+    update_dict = data.model_dump(exclude_unset=True)
+    for field, val in update_dict.items():
+        setattr(trip, field, val)
+
+    # Recalculate totals
+    freight = trip.freight_charges or 0.0
+    addl = trip.additional_charges or 0.0
+    disc = trip.discount or 0.0
+    tax = trip.tax_amount or 0.0
+    trip.total_revenue = freight + addl - disc + tax
+
+    diesel = trip.diesel_expense or 0.0
+    toll = trip.toll_expense or 0.0
+    allowance = trip.driver_allowance or 0.0
+    loading = trip.loading_unloading_expense or 0.0
+    other = trip.other_direct_expense or 0.0
+    trip.total_direct_expenses = diesel + toll + allowance + loading + other
+    trip.net_profit = trip.total_revenue - trip.total_direct_expenses
+
+    paid = trip.amount_paid or 0.0
+    trip.due_amount = max(0.0, trip.total_revenue - paid)
+
+    db.commit()
+    db.refresh(trip)
+    log_audit(db, "trip_update", context.organization_id, context.user.id, "Trip", trip.id, {"trip_number": trip.trip_number})
+    return {"message": "Trip updated successfully", "id": trip.id}
+
+@router.delete("/{trip_id}")
+def delete_trip(
+    trip_id: str,
+    db: Session = Depends(get_db),
+    context: CurrentContext = Depends(require_permission("trips", "delete"))
+):
+    trip = db.query(Trip).filter(
+        Trip.id == trip_id,
+        Trip.organization_id == context.organization_id
+    ).first()
+    if not trip:
+        raise HTTPException(status_code=404, detail="Trip not found.")
+
+    # Release vehicle and driver back to available if assigned
+    if trip.vehicle:
+        trip.vehicle.status = "available"
+    if trip.driver:
+        trip.driver.status = "available"
+
+    # Clean up any generated invoices & payments for this trip
+    from app.models.entities import Invoice, Payment
+    invoices = db.query(Invoice).filter(Invoice.trip_id == trip.id).all()
+    for inv in invoices:
+        db.query(Payment).filter(Payment.invoice_id == inv.id).delete()
+        db.delete(inv)
+
+    trip_num = trip.trip_number
+    db.delete(trip)
+    db.commit()
+    log_audit(db, "trip_delete", context.organization_id, context.user.id, "Trip", trip_id, {"trip_number": trip_num})
+    return {"message": "Trip deleted successfully"}
+
 @router.get("/{trip_id}/invoice")
 def get_or_create_trip_invoice(
     trip_id: str,
