@@ -9,16 +9,53 @@
     <!-- Android & PWA App Support -->
     <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
-    <meta name="theme-color" content="#2563eb" />
+    <meta name="theme-color" content="#020617" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="TransportPro" />
-  <script type="module" crossorigin src="/assets/index-DG7vZMlA.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-BKUWuwaG.css">
-
-  <body class="bg-slate-900 text-slate-900 min-h-screen">
-    <div id="root"></div>
+    <script type="module" crossorigin src="/assets/index-BFD6LaME.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-t_7MMV5t.css">
+  </head>
+  <body class="bg-slate-950 text-slate-100 min-h-screen">
+    <div id="root">
+      <div style="min-height: 100vh; background: #020617; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #ffffff; text-align: center; padding: 20px;">
+        <div style="position: relative; width: 280px; height: 160px; margin-bottom: 24px; perspective: 600px;">
+          <!-- 3D Perspective Grid Plane -->
+          <div style="position: absolute; width: 240px; height: 120px; left: 20px; bottom: 0; background: linear-gradient(180deg, rgba(37,99,235,0.1) 0%, rgba(56,189,248,0.3) 100%); transform: rotateX(65deg); border-radius: 12px; box-shadow: 0 0 30px rgba(56,189,248,0.4); border: 1.5px solid #38bdf8;"></div>
+          <!-- 3D Truck Illustration -->
+          <svg style="position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); animation: floatTruck 1.8s ease-in-out infinite; filter: drop-shadow(0 15px 15px rgba(0,0,0,0.6));" width="160" height="90" viewBox="0 0 160 90">
+            <!-- Truck Cargo Container -->
+            <rect x="35" y="10" width="115" height="52" rx="4" fill="#2563eb" stroke="#1d4ed8" stroke-width="2"/>
+            <line x1="55" y1="12" x2="55" y2="60" stroke="#1e40af" stroke-width="2"/>
+            <line x1="75" y1="12" x2="75" y2="60" stroke="#1e40af" stroke-width="2"/>
+            <line x1="95" y1="12" x2="95" y2="60" stroke="#1e40af" stroke-width="2"/>
+            <line x1="115" y1="12" x2="115" y2="60" stroke="#1e40af" stroke-width="2"/>
+            <text x="50" y="38" fill="#ffffff" font-size="9" font-weight="900" letter-spacing="1">TRANSPORT</text>
+            <text x="68" y="48" fill="#93c5fd" font-size="7" font-weight="700">PRO ERP</text>
+            <!-- Truck Cab -->
+            <path d="M 35 32 L 15 32 L 8 48 L 8 62 L 35 62 Z" fill="#1e3a8a" stroke="#1d4ed8" stroke-width="2"/>
+            <polygon points="32,36 18,36 13,48 32,48" fill="#38bdf8"/>
+            <!-- Headlight Beam -->
+            <polygon points="8,54 0,45 0,65" fill="#facc15" opacity="0.8"/>
+            <!-- Wheels -->
+            <circle cx="24" cy="65" r="9" fill="#0f172a" stroke="#64748b" stroke-width="2"/>
+            <circle cx="24" cy="65" r="4" fill="#cbd5e1"/>
+            <circle cx="65" cy="65" r="9" fill="#0f172a" stroke="#64748b" stroke-width="2"/>
+            <circle cx="65" cy="65" r="4" fill="#cbd5e1"/>
+            <circle cx="125" cy="65" r="9" fill="#0f172a" stroke="#64748b" stroke-width="2"/>
+            <circle cx="125" cy="65" r="4" fill="#cbd5e1"/>
+          </svg>
+        </div>
+        <div style="font-size: 15px; font-weight: 700; color: #60a5fa; letter-spacing: 0.5px; margin-bottom: 8px;">
+          Launching TransportPro Cloud ERP...
+        </div>
+        <div style="width: 180px; height: 3px; background: #1e293b; border-radius: 999px; overflow: hidden; position: relative;">
+          <div style="width: 80px; height: 100%; background: linear-gradient(90deg, #38bdf8, #2563eb); border-radius: 999px; animation: loadBar 1.2s infinite ease-in-out;"></div>
+        </div>
+      </div>
+      <style>@keyframes floatTruck{0%,to{transform:translate(-50%,-50%)translateY(0)}50%{transform:translate(-50%,-50%)translateY(-5px)}}@keyframes loadBar{0%{transform:translate(-100%)}to{transform:translate(250%)}}</style>
+    </div>
     <script>
       // Register Service Worker for PWA
       if ('serviceWorker' in navigator) {
