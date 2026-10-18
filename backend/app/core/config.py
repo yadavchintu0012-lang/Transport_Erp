@@ -5,8 +5,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = Path("/data") if Path("/data").exists() else BASE_DIR
-DEFAULT_DB_FILE = DATA_DIR / "transportpro.db"
-DEFAULT_DB_URL = f"sqlite:///{DEFAULT_DB_FILE.as_posix()}"
+NEON_CLOUD_DB_URL = "postgresql://neondb_owner:npg_Udl85IMaHxsg@ep-super-shadow-b5d9si5i.c-7.us-east-2.aws.neon.tech/neondb?sslmode=require"
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "TransportPro ERP"
@@ -14,7 +13,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = os.getenv("SECRET_KEY", "super-secret-jwt-key-transportpro-erp-2026-production-ready")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 90 # 90 days persistent login
-    DATABASE_URL: str = os.getenv("DATABASE_URL", DEFAULT_DB_URL)
+    DATABASE_URL: str = os.getenv("DATABASE_URL", NEON_CLOUD_DB_URL)
     DEMO_MODE: bool = True
 
     class Config:

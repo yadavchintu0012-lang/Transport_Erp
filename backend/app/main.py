@@ -1,9 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.core.config import settings
-from app.core.database import Base, engine
+from app.core.database import Base, engine, get_db
 from app.services.seed import seed
 from app.api import (
     auth, staff, vehicles, drivers, customers, trips, expenses,
