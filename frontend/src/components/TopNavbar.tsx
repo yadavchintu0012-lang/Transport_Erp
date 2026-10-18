@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Bell, Building, Smartphone, Download } from 'lucide-react';
+import { Menu, Bell, Building, Smartphone, Wifi, WifiOff, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useOfflineSync } from '../services/syncEngine';
 
 interface TopNavbarProps {
   onToggleSidebar: () => void;
@@ -9,6 +10,7 @@ interface TopNavbarProps {
 
 export const TopNavbar: React.FC<TopNavbarProps> = ({ onToggleSidebar, title }) => {
   const { organization, role } = useAuth();
+  const { isOnline, pendingCount, isSyncing, syncNow } = useOfflineSync();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstallable, setIsInstallable] = useState(false);
 
@@ -47,7 +49,38 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onToggleSidebar, title }) 
         <h1 className="text-xl font-bold text-slate-800 tracking-tight">{title}</h1>
       </div>
 
-      <div className="flex items-center space-x-3 sm:space-x-4">
+      <div className="flex items-center space-x-2 sm:space-x-3">
+        {/* Offline / Cloud Sync Status Pill */}
+        {isOnline ? (
+          pendingCount > 0 ? (
+            <button
+              onClick={() => syncNow()}
+              disabled={isSyncing}
+              className="flex items-center space-x-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-full text-xs font-semibold transition-all shadow-2xs"
+              title="Click to sync pending offline records to cloud"
+            >
+              <RefreshCw size={13} className={`text-amber-600 ${isSyncing ? 'animate-spin' : ''}`} />
+              <span>{isSyncing ? 'Syncing...' : `Sync (${pendingCount})`}</span>
+            </button>
+          ) : (
+            <div 
+              className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-medium"
+              title="All records are synced with Neon Cloud Database"
+            >
+              <CheckCircle2 size={13} className="text-emerald-600" />
+              <span>Cloud Synced</span>
+            </div>
+          )
+        ) : (
+          <div 
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-rose-50 text-rose-700 border border-rose-300 rounded-full text-xs font-semibold animate-pulse"
+            title="Device is currently offline. All changes are saved locally to IndexedDB."
+          >
+            <WifiOff size={13} className="text-rose-600" />
+            <span>Offline {pendingCount > 0 ? `(${pendingCount} pending)` : ''}</span>
+          </div>
+        )}
+
         {/* Install Mobile App Button */}
         <button
           onClick={handleInstallClick}

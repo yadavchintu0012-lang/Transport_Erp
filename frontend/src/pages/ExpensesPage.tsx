@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Receipt, Plus, Search, CheckCircle, IndianRupee } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -36,6 +36,13 @@ export const ExpensesPage: React.FC = () => {
 
   useEffect(() => {
     fetchExpenses();
+  }, []);
+
+  // Auto-refresh when offline sync finishes
+  useEffect(() => {
+    const handleSync = () => fetchExpenses();
+    window.addEventListener('transportpro:sync_completed', handleSync);
+    return () => window.removeEventListener('transportpro:sync_completed', handleSync);
   }, []);
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -85,7 +92,16 @@ export const ExpensesPage: React.FC = () => {
           <tbody className="divide-y divide-slate-100">
             {expenses.map((e) => (
               <tr key={e.id} className="hover:bg-slate-50/60">
-                <td className="py-3 px-4 font-bold text-blue-700">{e.expense_number}</td>
+                <td className="py-3 px-4 font-bold text-blue-700">
+                  <div className="flex items-center space-x-1.5">
+                    <span>{e.expense_number}</span>
+                    {(e._isOffline || (typeof e.id === 'string' && e.id.startsWith('offline_')) || e.sync_status === 'pending') && (
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300" title="Saved locally on device. Pending upload to cloud.">
+                        🟡 Pending
+                      </span>
+                    )}
+                  </div>
+                </td>
                 <td className="py-3 px-4">{new Date(e.expense_date).toLocaleDateString()}</td>
                 <td className="py-3 px-4 capitalize font-medium text-slate-800">{e.category.replace('_', ' ')}</td>
                 <td className="py-3 px-4">{e.vendor_name || 'N/A'}</td>

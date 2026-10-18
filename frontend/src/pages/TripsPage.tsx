@@ -113,6 +113,16 @@ export const TripsPage: React.FC = () => {
     fetchMasterData();
   }, [statusFilter]);
 
+  // Automatically refresh trips when background sync finishes uploading offline records
+  useEffect(() => {
+    const handleSyncCompleted = () => {
+      fetchTrips();
+      fetchMasterData();
+    };
+    window.addEventListener('transportpro:sync_completed', handleSyncCompleted);
+    return () => window.removeEventListener('transportpro:sync_completed', handleSyncCompleted);
+  }, []);
+
   const handleApplyDateFilter = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     fetchTrips();
@@ -487,7 +497,14 @@ export const TripsPage: React.FC = () => {
                   <tr key={t.id} className="hover:bg-slate-50/60">
                     {/* Trip Details */}
                     <td className="py-3 px-4">
-                      <div className="font-bold text-blue-700">{t.trip_number}</div>
+                      <div className="flex items-center space-x-1.5">
+                        <span className="font-bold text-blue-700">{t.trip_number}</span>
+                        {(t._isOffline || (typeof t.id === 'string' && t.id.startsWith('offline_')) || t.sync_status === 'pending') && (
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300" title="Saved locally on this device. Will upload to cloud once connected.">
+                            🟡 Pending Sync
+                          </span>
+                        )}
+                      </div>
                       <div className="text-[11px] text-slate-400 mt-0.5">
                         {t.trip_date ? new Date(t.trip_date).toLocaleDateString() : ''}
                       </div>
@@ -500,10 +517,10 @@ export const TripsPage: React.FC = () => {
                     <td className="py-3 px-4">
                       <div className="flex items-center space-x-1 font-semibold text-slate-800">
                         <MapPin size={12} className="text-blue-500" />
-                        <span>{t.route.pickup_city} &rarr; {t.route.delivery_city}</span>
+                        <span>{t.route?.pickup_city || t.pickup_city || 'Origin'} &rarr; {t.route?.delivery_city || t.delivery_city || 'Destination'}</span>
                       </div>
                       <div className="text-[11px] text-slate-500 mt-1">
-                        {t.cargo.description || 'General freight'} • {t.cargo.weight_tonnes}T
+                        {t.cargo?.description || t.cargo_description || 'General freight'} • {t.cargo?.weight_tonnes !== undefined ? t.cargo.weight_tonnes : (t.cargo_weight_tonnes || 0)}T
                       </div>
                     </td>
 
