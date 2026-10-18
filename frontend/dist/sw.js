@@ -1,6 +1,6 @@
 // TransportPro ERP - PWA Service Worker for Offline & Mobile Caching
-const CACHE_NAME = 'transportpro-cache-v6';
-const ASSETS_TO_CACHE = [
+const CACHE_NAME = 'transportpro-cache-v7';
+const CORE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
@@ -14,7 +14,7 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+      return cache.addAll(CORE_ASSETS);
     })
   );
   self.skipWaiting();
@@ -26,6 +26,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
+            console.log('[SW] Removing old cache:', key);
             return caches.delete(key);
           }
         })
@@ -36,23 +37,55 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Let API requests pass directly to backend
-  if (event.request.url.includes('/api/')) {
+  const url = event.request.url;
+
+  // Let backend API requests bypass Service Worker (handled by IndexedDB offline layer in api.ts)
+  if (url.includes('/api/')) {
     return;
   }
 
-  // Navigation requests: Always Network-First so latest deployment loads immediately
+  // 1. Navigation / HTML Document requests
   if (event.request.mode === 'navigate' || event.request.destination === 'document') {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match('/index.html'))
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const clone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          return caches.match('/index.html').then((fallback) => {
+            return fallback || caches.match('/');
+          });
+        })
     );
     return;
   }
 
-  // Static assets: Cache-first with network fallback
+  // 2. Static Assets (JS, CSS, Images, Fonts, Icons)
+  // Stale-While-Revalidate + Dynamic Cache Write
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
-      return cachedResponse || fetch(event.request);
+      const fetchPromise = fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
+          }
+          return networkResponse;
+        })
+        .catch((err) => {
+          // If offline and request is an image, fallback to favicon
+          if (event.request.destination === 'image') {
+            return caches.match('/favicon.svg');
+          }
+          return null;
+        });
+
+      // If already cached, serve immediately from cache; otherwise await network
+      return cachedResponse || fetchPromise;
     })
   );
 });

@@ -118,7 +118,21 @@ export const Dashboard: React.FC<{ onNavigateTab?: (tab: string) => void }> = ({
     );
   }
 
-  const { kpis, charts, widgets } = data;
+  const kpis = data?.kpis || {
+    total_trips: 0,
+    active_trips: 0,
+    delivered_trips: 0,
+    total_revenue: 0,
+    total_expenses: 0,
+    net_profit: 0,
+    active_vehicles: 0,
+    active_drivers: 0,
+    total_invoiced: 0,
+    total_paid: 0,
+    total_receivables: 0
+  };
+  const charts = data?.charts || { revenue_trend: [], expense_breakdown: [] };
+  const widgets = data?.widgets || { recent_trips: [], top_routes: [], fleet_utilization: 0 };
   const PIE_COLORS = ['#2563eb', '#06b6d4', '#f59e0b', '#ec4899', '#8b5cf6', '#10b981'];
 
   return (

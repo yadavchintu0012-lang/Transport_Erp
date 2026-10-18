@@ -91,37 +91,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const fetchMe = async () => {
+      // If offline, preserve cached user from localStorage and do not attempt network fetch
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        console.log('[AuthContext] Device is offline, preserving cached user session');
+        setIsLoading(false);
+        return;
+      }
+
       const storedToken = localStorage.getItem('token');
       if (storedToken) {
         try {
           const res = await api.get('/auth/me');
-          setUser(res.data.user);
-          setOrganization(res.data.organization);
-          setRole(res.data.role);
-          setPermissions(res.data.permissions || {});
+          if (res.data?.user) {
+            setUser(res.data.user);
+            setOrganization(res.data.organization);
+            setRole(res.data.role);
+            setPermissions(res.data.permissions || {});
 
-          // Persist user and session info
-          localStorage.setItem('user', JSON.stringify(res.data.user));
-          if (res.data.organization) {
-            localStorage.setItem('organization', JSON.stringify(res.data.organization));
-          } else {
-            localStorage.removeItem('organization');
+            // Persist user and session info
+            localStorage.setItem('user', JSON.stringify(res.data.user));
+            if (res.data.organization) {
+              localStorage.setItem('organization', JSON.stringify(res.data.organization));
+            } else {
+              localStorage.removeItem('organization');
+            }
+            if (res.data.role) {
+              localStorage.setItem('role', JSON.stringify(res.data.role));
+            } else {
+              localStorage.removeItem('role');
+            }
+            localStorage.setItem('permissions', JSON.stringify(res.data.permissions || {}));
           }
-          if (res.data.role) {
-            localStorage.setItem('role', JSON.stringify(res.data.role));
-          } else {
-            localStorage.removeItem('role');
-          }
-          localStorage.setItem('permissions', JSON.stringify(res.data.permissions || {}));
         } catch (err: any) {
           const status = err?.response?.status;
-          // ONLY log out if backend returns 401 Unauthorized
-          // Never log out on temporary backend cold starts, network errors, 502/503/504
+          // ONLY log out if backend explicitly returns 401 Unauthorized
+          // Never log out on network errors, offline mode, or 502/503/504
           if (status === 401) {
             console.warn('Session expired or unauthorized, logging out');
             logout();
           } else {
-            console.warn('Backend updating or waking up, retaining saved session');
+            console.warn('Backend updating or device offline, retaining saved session');
           }
         }
       }
