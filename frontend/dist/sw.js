@@ -1,5 +1,5 @@
 // TransportPro ERP - PWA Service Worker for Offline & Mobile Caching
-const CACHE_NAME = 'transportpro-cache-v7';
+const CACHE_NAME = 'transportpro-cache-v10-nuclear';
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -12,12 +12,12 @@ const CORE_ASSETS = [
 ];
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(CORE_ASSETS);
     })
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
@@ -26,14 +26,19 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
-            console.log('[SW] Removing old cache:', key);
+            console.log('[SW] Purging stale cache:', key);
             return caches.delete(key);
           }
         })
       );
+    }).then(() => self.clients.claim()).then(() => {
+      return self.clients.matchAll({ type: 'window' }).then((clients) => {
+        clients.forEach((client) => {
+          client.postMessage({ type: 'RELOAD_NEW_VERSION' });
+        });
+      });
     })
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
@@ -44,10 +49,10 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 1. Navigation / HTML Document requests
+  // 1. Navigation / HTML Document requests: ALWAYS Network-First
   if (event.request.mode === 'navigate' || event.request.destination === 'document') {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: 'no-cache' })
         .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             const clone = networkResponse.clone();
@@ -76,15 +81,13 @@ self.addEventListener('fetch', (event) => {
           }
           return networkResponse;
         })
-        .catch((err) => {
-          // If offline and request is an image, fallback to favicon
+        .catch(() => {
           if (event.request.destination === 'image') {
             return caches.match('/favicon.svg');
           }
           return null;
         });
 
-      // If already cached, serve immediately from cache; otherwise await network
       return cachedResponse || fetchPromise;
     })
   );

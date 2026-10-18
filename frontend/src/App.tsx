@@ -36,6 +36,8 @@ const AppContent: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [dismissOffline, setDismissOffline] = useState(false);
+  const [showManualOffline, setShowManualOffline] = useState(false);
+  const [showManualLoading, setShowManualLoading] = useState(false);
 
   // Auto-switch tabs strictly depending on user role
   useEffect(() => {
@@ -62,6 +64,7 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     if (isOnline) {
       setDismissOffline(false);
+      setShowManualOffline(false);
     }
   }, [isOnline]);
 
@@ -96,13 +99,30 @@ const AppContent: React.FC = () => {
 
   return (
     <>
+      {/* 3D Loading Preview Overlay */}
+      {showManualLoading && (
+        <div className="fixed inset-0 z-[99999] bg-slate-950 flex flex-col items-center justify-center">
+          <Loading3D message="3D Highway Logistics Truck Animation Preview" />
+          <button
+            onClick={() => setShowManualLoading(false)}
+            className="fixed top-6 right-6 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold border border-slate-700 shadow-xl cursor-pointer z-50 transition-all"
+          >
+            &times; Close 3D Loader
+          </button>
+        </div>
+      )}
+
       {/* 3D Offline Interactive Screen Overlay */}
-      {!isOnline && !dismissOffline && (
+      {(showManualOffline || (!isOnline && !dismissOffline)) && (
         <OfflineScreen3D 
           onRetry={() => {
             syncNow();
+            setShowManualOffline(false);
           }}
-          onDismiss={() => setDismissOffline(true)}
+          onDismiss={() => {
+            setDismissOffline(true);
+            setShowManualOffline(false);
+          }}
         />
       )}
 
@@ -120,7 +140,8 @@ const AppContent: React.FC = () => {
             <TopNavbar
               title={getPageTitle()}
               onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-              onShowOfflineModal={() => setDismissOffline(false)}
+              onShowOfflineModal={() => setShowManualOffline(true)}
+              onShowLoadingModal={() => setShowManualLoading(true)}
             />
             <main className="flex-1 overflow-y-auto">
               {/* SaaS Admin Views (ONLY FOR SUPER ADMIN) */}
