@@ -6,9 +6,10 @@ import { useOfflineSync } from '../services/syncEngine';
 interface TopNavbarProps {
   onToggleSidebar: () => void;
   title: string;
+  onShowOfflineModal?: () => void;
 }
 
-export const TopNavbar: React.FC<TopNavbarProps> = ({ onToggleSidebar, title }) => {
+export const TopNavbar: React.FC<TopNavbarProps> = ({ onToggleSidebar, title, onShowOfflineModal }) => {
   const { organization, role } = useAuth();
   const { isOnline, pendingCount, isSyncing, syncNow } = useOfflineSync();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -72,13 +73,14 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onToggleSidebar, title }) 
             </div>
           )
         ) : (
-          <div 
-            className="flex items-center space-x-1.5 px-3 py-1.5 bg-rose-50 text-rose-700 border border-rose-300 rounded-full text-xs font-semibold animate-pulse"
-            title="Device is currently offline. All changes are saved locally to IndexedDB."
+          <button 
+            onClick={onShowOfflineModal}
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 rounded-full text-xs font-semibold animate-pulse cursor-pointer shadow-xs"
+            title="Click to view 3D Offline Connection Status"
           >
             <WifiOff size={13} className="text-rose-600" />
             <span>Offline {pendingCount > 0 ? `(${pendingCount} pending)` : ''}</span>
-          </div>
+          </button>
         )}
 
         {/* Install Mobile App Button */}

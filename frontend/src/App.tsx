@@ -3,6 +3,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { Sidebar } from './components/Sidebar';
 import { TopNavbar } from './components/TopNavbar';
 import { AuthModal } from './components/AuthModal';
+import { Loading3D } from './components/Loading3D';
+import { OfflineScreen3D } from './components/OfflineScreen3D';
 
 import { Dashboard } from './pages/Dashboard';
 import { TripsPage } from './pages/TripsPage';
@@ -43,16 +45,45 @@ const AppContent: React.FC = () => {
     }
   }, [user]);
 
+  const [isOnline, setIsOnline] = useState<boolean>(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
+  const [dismissOffline, setDismissOffline] = useState(false);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      setDismissOffline(false);
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      setDismissOffline(false);
+    };
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <Loading3D message="Connecting to Neon Cloud Database..." />;
   }
 
   if (!user) {
-    return <AuthModal />;
+    return (
+      <>
+        {!isOnline && !dismissOffline && (
+          <OfflineScreen3D 
+            onRetry={() => {
+              if (navigator.onLine) setIsOnline(true);
+              else window.location.reload();
+            }}
+            onDismiss={() => setDismissOffline(true)}
+          />
+        )}
+        <AuthModal />
+      </>
+    );
   }
 
   const getPageTitle = () => {
@@ -81,7 +112,16 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-screen bg-slate-50 overflow-hidden relative">
+      {!isOnline && !dismissOffline && (
+        <OfflineScreen3D 
+          onRetry={() => {
+            if (navigator.onLine) setIsOnline(true);
+            else window.location.reload();
+          }}
+          onDismiss={() => setDismissOffline(true)}
+        />
+      )}
       <Sidebar
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
@@ -92,6 +132,7 @@ const AppContent: React.FC = () => {
         <TopNavbar
           title={getPageTitle()}
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          onShowOfflineModal={() => setDismissOffline(false)}
         />
         <main className="flex-1 overflow-y-auto">
           {/* SaaS Admin Views (ONLY FOR SUPER ADMIN) */}
