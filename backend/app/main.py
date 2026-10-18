@@ -53,5 +53,21 @@ def root():
         "service": settings.PROJECT_NAME,
         "version": "1.0.0",
         "status": "operational",
-        "docs": "/docs"
+        "docs": "/docs",
+        "health": "/health"
+    }
+
+@app.get("/health")
+def health(db = Depends(get_db)):
+    from app.models.entities import User, Organization
+    from datetime import datetime, timezone
+    db_type = "postgresql" if "postgres" in settings.DATABASE_URL else "sqlite"
+    user_count = db.query(User).count()
+    org_count = db.query(Organization).count()
+    return {
+        "status": "operational",
+        "database": db_type,
+        "total_users": user_count,
+        "total_organizations": org_count,
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }

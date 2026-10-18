@@ -53,7 +53,16 @@ export const AuthModal: React.FC<{ initialMode?: 'login' | 'register' }> = ({ in
         res.data.permissions
       );
     } catch (err: any) {
-      const msg = err.response?.data?.detail || (err.message === 'Network Error' ? 'Cannot reach backend server. Please check connection.' : (err.message || 'Invalid email or password'));
+      let msg = err.response?.data?.detail;
+      if (!msg) {
+        if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+          msg = 'Cloud server is waking up from sleep mode. Please try clicking Sign In again in 10-15 seconds.';
+        } else if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
+          msg = 'Unable to reach the cloud server. Please check your internet connection or try again shortly.';
+        } else {
+          msg = err.message || 'Invalid email or password';
+        }
+      }
       setError(msg);
     } finally {
       setLoading(false);
@@ -82,7 +91,16 @@ export const AuthModal: React.FC<{ initialMode?: 'login' | 'register' }> = ({ in
         res.data.permissions
       );
     } catch (err: any) {
-      const msg = err.response?.data?.detail || (err.message === 'Network Error' ? 'Cannot reach backend server. Please check connection.' : (err.message || 'Registration failed'));
+      let msg = err.response?.data?.detail;
+      if (!msg) {
+        if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+          msg = 'Cloud server is waking up from sleep mode. Please try clicking Create Account again in 10-15 seconds.';
+        } else if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
+          msg = 'Unable to reach the cloud server. Please check your internet connection or try again shortly.';
+        } else {
+          msg = err.message || 'Registration failed';
+        }
+      }
       setError(msg);
     } finally {
       setLoading(false);
