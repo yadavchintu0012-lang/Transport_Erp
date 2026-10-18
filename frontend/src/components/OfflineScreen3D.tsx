@@ -264,7 +264,7 @@ export const OfflineScreen3D: React.FC<OfflineScreen3DProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center p-4 select-none">
+    <div className="fixed inset-0 z-[99999] bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center p-4 select-none animate-in fade-in duration-300">
       <div className="relative max-w-lg w-full bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col items-center p-6 text-center">
         {/* Glow ambient background */}
         <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-72 bg-red-600/15 blur-3xl rounded-full pointer-events-none"></div>

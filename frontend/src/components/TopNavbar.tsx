@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Bell, Building, Smartphone, Wifi, WifiOff, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { Menu, Bell, Building, Smartphone, Wifi, WifiOff, RefreshCw, CheckCircle2, Radio } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useOfflineSync } from '../services/syncEngine';
 
@@ -53,33 +53,45 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onToggleSidebar, title, on
       <div className="flex items-center space-x-2 sm:space-x-3">
         {/* Offline / Cloud Sync Status Pill */}
         {isOnline ? (
-          pendingCount > 0 ? (
-            <button
-              onClick={() => syncNow()}
-              disabled={isSyncing}
-              className="flex items-center space-x-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-full text-xs font-semibold transition-all shadow-2xs"
-              title="Click to sync pending offline records to cloud"
+          <div className="flex items-center space-x-2">
+            {pendingCount > 0 ? (
+              <button
+                onClick={() => syncNow()}
+                disabled={isSyncing}
+                className="flex items-center space-x-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-full text-xs font-semibold transition-all shadow-2xs"
+                title="Click to sync pending offline records to cloud"
+              >
+                <RefreshCw size={13} className={`text-amber-600 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span>{isSyncing ? 'Syncing...' : `Sync (${pendingCount})`}</span>
+              </button>
+            ) : (
+              <div 
+                className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-medium"
+                title="All records are synced with Neon Cloud Database"
+              >
+                <CheckCircle2 size={13} className="text-emerald-600" />
+                <span>Cloud Synced</span>
+              </div>
+            )}
+
+            {/* Direct button to open 3D Offline Interactive Screen */}
+            <button 
+              onClick={onShowOfflineModal}
+              className="flex items-center space-x-1 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-full text-[11px] font-semibold transition-all cursor-pointer shadow-2xs"
+              title="Click to preview the 3D Offline Interactive Screen"
             >
-              <RefreshCw size={13} className={`text-amber-600 ${isSyncing ? 'animate-spin' : ''}`} />
-              <span>{isSyncing ? 'Syncing...' : `Sync (${pendingCount})`}</span>
+              <Radio size={12} className="text-indigo-600 animate-pulse" />
+              <span>3D Offline</span>
             </button>
-          ) : (
-            <div 
-              className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-medium"
-              title="All records are synced with Neon Cloud Database"
-            >
-              <CheckCircle2 size={13} className="text-emerald-600" />
-              <span>Cloud Synced</span>
-            </div>
-          )
+          </div>
         ) : (
           <button 
             onClick={onShowOfflineModal}
-            className="flex items-center space-x-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 rounded-full text-xs font-semibold animate-pulse cursor-pointer shadow-xs"
-            title="Click to view 3D Offline Connection Status"
+            className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white border border-rose-700 rounded-full text-xs font-bold animate-pulse cursor-pointer shadow-md"
+            title="Click to view 3D Offline Screen"
           >
-            <WifiOff size={13} className="text-rose-600" />
-            <span>Offline {pendingCount > 0 ? `(${pendingCount} pending)` : ''}</span>
+            <WifiOff size={14} className="text-white" />
+            <span>Offline Mode {pendingCount > 0 ? `(${pendingCount} pending)` : ''}</span>
           </button>
         )}
 

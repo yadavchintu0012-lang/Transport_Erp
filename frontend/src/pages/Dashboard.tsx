@@ -31,6 +31,7 @@ import {
 } from 'recharts';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { Loading3D } from '../components/Loading3D';
 
 export const Dashboard: React.FC<{ onNavigateTab?: (tab: string) => void }> = ({ onNavigateTab }) => {
   const { hasPermission } = useAuth();
@@ -110,12 +111,8 @@ export const Dashboard: React.FC<{ onNavigateTab?: (tab: string) => void }> = ({
     setFilterPeriod(preset);
   };
 
-  if (loading || !data) {
-    return (
-      <div className="p-8 flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
+  if (loading && !data) {
+    return <Loading3D message="Loading Fleet Analytics & Operations Overview..." />;
   }
 
   const kpis = data?.kpis || {

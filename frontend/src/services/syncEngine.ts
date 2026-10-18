@@ -25,6 +25,7 @@ class SyncEngine {
   private lastSyncTime: string | null = null;
   private listeners: Set<SyncListener> = new Set();
   private syncTimer: any = null;
+  private heartbeatTimer: any = null;
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -34,12 +35,52 @@ class SyncEngine {
       // Initial queue check
       this.refreshPendingCount();
 
+      // Active Heartbeat: Checks real internet connectivity every 4 seconds
+      this.heartbeatTimer = setInterval(() => {
+        this.checkConnectivity();
+      }, 4000);
+
       // Periodic check every 45s when online
       this.syncTimer = setInterval(() => {
         if (this.isOnline && !this.isSyncing) {
           this.syncNow();
         }
       }, 45000);
+    }
+  }
+
+  public async checkConnectivity(): Promise<boolean> {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      if (this.isOnline) {
+        this.handleNetworkChange(false);
+      }
+      return false;
+    }
+
+    try {
+      // Lightweight HEAD request with cache busting to test live connectivity
+      const res = await fetch('/favicon.svg?t=' + Date.now(), {
+        method: 'HEAD',
+        cache: 'no-store'
+      });
+      if (res.ok || res.status === 200 || res.status === 304) {
+        if (!this.isOnline) {
+          this.handleNetworkChange(true);
+        }
+        return true;
+      }
+    } catch {
+      if (this.isOnline) {
+        this.handleNetworkChange(false);
+      }
+      return false;
+    }
+    return this.isOnline;
+  }
+
+  public setOnlineState(online: boolean) {
+    if (this.isOnline !== online) {
+      this.handleNetworkChange(online);
     }
   }
 

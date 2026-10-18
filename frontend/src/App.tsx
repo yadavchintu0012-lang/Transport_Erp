@@ -26,11 +26,16 @@ import { SaasPlansPage } from './pages/saas/SaasPlansPage';
 import { SaasAnalyticsPage } from './pages/saas/SaasAnalyticsPage';
 import { SaasAuditLogsPage } from './pages/saas/SaasAuditLogsPage';
 
+import { useOfflineSync } from './services/syncEngine';
+
 const AppContent: React.FC = () => {
   const { user, isLoading } = useAuth();
+  const { isOnline, syncNow } = useOfflineSync();
   const [currentTab, setCurrentTab] = useState('dashboard');
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [dismissOffline, setDismissOffline] = useState(false);
 
   // Auto-switch tabs strictly depending on user role
   useEffect(() => {
@@ -45,45 +50,23 @@ const AppContent: React.FC = () => {
     }
   }, [user]);
 
-  const [isOnline, setIsOnline] = useState<boolean>(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
-  const [dismissOffline, setDismissOffline] = useState(false);
-
+  // Ensure 3D Loading animation runs visibly on site load for 1.4s
   useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true);
-      setDismissOffline(false);
-    };
-    const handleOffline = () => {
-      setIsOnline(false);
-      setDismissOffline(false);
-    };
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
+    const timer = setTimeout(() => {
+      setIsInitialLoading(false);
+    }, 1400);
+    return () => clearTimeout(timer);
   }, []);
 
-  if (isLoading) {
-    return <Loading3D message="Connecting to Neon Cloud Database..." />;
-  }
+  // When internet reconnects, reset dismiss state
+  useEffect(() => {
+    if (isOnline) {
+      setDismissOffline(false);
+    }
+  }, [isOnline]);
 
-  if (!user) {
-    return (
-      <>
-        {!isOnline && !dismissOffline && (
-          <OfflineScreen3D 
-            onRetry={() => {
-              if (navigator.onLine) setIsOnline(true);
-              else window.location.reload();
-            }}
-            onDismiss={() => setDismissOffline(true)}
-          />
-        )}
-        <AuthModal />
-      </>
-    );
+  if (isInitialLoading || isLoading) {
+    return <Loading3D message="Synchronizing TransportPro Cloud ERP..." />;
   }
 
   const getPageTitle = () => {
@@ -112,72 +95,79 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden relative">
+    <>
+      {/* 3D Offline Interactive Screen Overlay */}
       {!isOnline && !dismissOffline && (
         <OfflineScreen3D 
           onRetry={() => {
-            if (navigator.onLine) setIsOnline(true);
-            else window.location.reload();
+            syncNow();
           }}
           onDismiss={() => setDismissOffline(true)}
         />
       )}
-      <Sidebar
-        currentTab={currentTab}
-        setCurrentTab={setCurrentTab}
-        isOpen={sidebarOpen}
-        setIsOpen={setSidebarOpen}
-      />
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <TopNavbar
-          title={getPageTitle()}
-          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-          onShowOfflineModal={() => setDismissOffline(false)}
-        />
-        <main className="flex-1 overflow-y-auto">
-          {/* SaaS Admin Views (ONLY FOR SUPER ADMIN) */}
-          {user.is_superadmin && (
-            <>
-              {currentTab === 'saas-dashboard' && <SaasDashboard onNavigateTab={(tab) => setCurrentTab(tab)} />}
-              {currentTab === 'saas-accounts' && (
-                <SaasAccountsPage
-                  onSelectAccount={(orgId) => {
-                    setSelectedAccountId(orgId);
-                    setCurrentTab('saas-account-detail');
-                  }}
-                />
-              )}
-              {currentTab === 'saas-account-detail' && selectedAccountId && (
-                <SaasAccountDetailPage
-                  orgId={selectedAccountId}
-                  onBack={() => setCurrentTab('saas-accounts')}
-                />
-              )}
-              {currentTab === 'saas-plans' && <SaasPlansPage />}
-              {currentTab === 'saas-analytics' && <SaasAnalyticsPage />}
-              {currentTab === 'saas-audit' && <SaasAuditLogsPage />}
-            </>
-          )}
 
-          {/* ERP Operational Views (ONLY FOR ERP / TENANT USERS) */}
-          {!user.is_superadmin && (
-            <>
-              {currentTab === 'dashboard' && <Dashboard onNavigateTab={(tab) => setCurrentTab(tab)} />}
-              {currentTab === 'trips' && <TripsPage />}
-              {currentTab === 'vehicles' && <VehiclesPage />}
-              {currentTab === 'drivers' && <DriversPage />}
-              {currentTab === 'customers' && <CustomersPage />}
-              {currentTab === 'expenses' && <ExpensesPage />}
-              {currentTab === 'invoices' && <InvoicesPage />}
-              {currentTab === 'reports' && <ReportsPage />}
-              {currentTab === 'staff' && <StaffPage />}
-              {currentTab === 'subscriptions' && <SubscriptionsPage />}
-              {currentTab === 'audit' && <AuditPage />}
-            </>
-          )}
-        </main>
-      </div>
-    </div>
+      {!user ? (
+        <AuthModal />
+      ) : (
+        <div className="flex h-screen bg-slate-50 overflow-hidden relative">
+          <Sidebar
+            currentTab={currentTab}
+            setCurrentTab={setCurrentTab}
+            isOpen={sidebarOpen}
+            setIsOpen={setSidebarOpen}
+          />
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <TopNavbar
+              title={getPageTitle()}
+              onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+              onShowOfflineModal={() => setDismissOffline(false)}
+            />
+            <main className="flex-1 overflow-y-auto">
+              {/* SaaS Admin Views (ONLY FOR SUPER ADMIN) */}
+              {user.is_superadmin && (
+                <>
+                  {currentTab === 'saas-dashboard' && <SaasDashboard onNavigateTab={(tab) => setCurrentTab(tab)} />}
+                  {currentTab === 'saas-accounts' && (
+                    <SaasAccountsPage
+                      onSelectAccount={(orgId) => {
+                        setSelectedAccountId(orgId);
+                        setCurrentTab('saas-account-detail');
+                      }}
+                    />
+                  )}
+                  {currentTab === 'saas-account-detail' && selectedAccountId && (
+                    <SaasAccountDetailPage
+                      orgId={selectedAccountId}
+                      onBack={() => setCurrentTab('saas-accounts')}
+                    />
+                  )}
+                  {currentTab === 'saas-plans' && <SaasPlansPage />}
+                  {currentTab === 'saas-analytics' && <SaasAnalyticsPage />}
+                  {currentTab === 'saas-audit' && <SaasAuditLogsPage />}
+                </>
+              )}
+
+              {/* Standard Enterprise ERP Views */}
+              {!user.is_superadmin && (
+                <>
+                  {currentTab === 'dashboard' && <Dashboard onNavigateTab={(tab) => setCurrentTab(tab)} />}
+                  {currentTab === 'trips' && <TripsPage />}
+                  {currentTab === 'vehicles' && <VehiclesPage />}
+                  {currentTab === 'drivers' && <DriversPage />}
+                  {currentTab === 'customers' && <CustomersPage />}
+                  {currentTab === 'expenses' && <ExpensesPage />}
+                  {currentTab === 'invoices' && <InvoicesPage />}
+                  {currentTab === 'reports' && <ReportsPage />}
+                  {currentTab === 'staff' && <StaffPage />}
+                  {currentTab === 'subscriptions' && <SubscriptionsPage />}
+                  {currentTab === 'audit' && <AuditPage />}
+                </>
+              )}
+            </main>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

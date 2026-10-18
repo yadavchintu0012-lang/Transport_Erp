@@ -246,6 +246,10 @@ api.interceptors.request.use(async (config) => {
 // -------------------------------------------------------------
 api.interceptors.response.use(
   (response: AxiosResponse) => {
+    // If request succeeded from network, update online status
+    if (typeof navigator !== 'undefined' && navigator.onLine) {
+      syncEngine.setOnlineState(true);
+    }
     // When online and request succeeded, cache GET requests in background
     if (response.config.method?.toLowerCase() === 'get' && response.data) {
       const cacheKey = getCacheKey(response.config);
@@ -258,6 +262,9 @@ api.interceptors.response.use(
     if (!config) return Promise.reject(error);
 
     const isNetworkError = !error.response || error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED';
+    if (isNetworkError) {
+      syncEngine.setOnlineState(false);
+    }
     const isOffline = typeof navigator !== 'undefined' && (!navigator.onLine || isNetworkError);
 
     // 1. Reactive GET fallback on network failure
