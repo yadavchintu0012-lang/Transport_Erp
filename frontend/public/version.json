@@ -1,14 +1,14 @@
 {
-  "version": "2.4.4",
-  "buildDate": "2026-10-27T03:02:00Z",
-  "buildTimestamp": 1793050920000,
-  "title": "TransportPro ERP v2.4.4",
-  "description": "Clean Header Navigation & Full Feature Retention",
+  "version": "2.4.5",
+  "buildDate": "2026-10-27T03:16:00Z",
+  "buildTimestamp": 1793051760000,
+  "title": "TransportPro ERP v2.4.5",
+  "description": "Standard Professional 1-Page Tax Invoice & Trip Linking",
   "features": [
-    "Removed offline preview icon from header navbar for clean UI",
-    "Retained automatic 3D offline screen detection on network loss",
-    "Retained 3D truck loading screen animation on startup and dashboard",
-    "Notification Center with unread counter & 1-click update",
-    "Write/Type customer name directly in Trips & Invoices"
+    "Standardized 1-page professional tax invoice layout (A4 portrait)",
+    "Invoice generation linked directly to selected trip",
+    "Auto-fills customer, freight charges, and route movement",
+    "Indian GTA SAC 996511 compliant with RCM declaration & INR words",
+    "Strict 1-page A4 print stylesheet with zero page overflow"
   ]
 }

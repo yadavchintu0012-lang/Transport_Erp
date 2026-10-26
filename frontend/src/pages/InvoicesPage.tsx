@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Plus, Search, CheckCircle, IndianRupee, Printer } from 'lucide-react';
+import { FileText, Plus, Search, CheckCircle, IndianRupee, Printer, Truck } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { StandardInvoiceModal } from '../components/StandardInvoiceModal';
@@ -7,6 +7,7 @@ import { StandardInvoiceModal } from '../components/StandardInvoiceModal';
 export const InvoicesPage: React.FC = () => {
   const { hasPermission } = useAuth();
   const [invoices, setInvoices] = useState<any[]>([]);
+  const [trips, setTrips] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
@@ -17,6 +18,7 @@ export const InvoicesPage: React.FC = () => {
   const [customerInputName, setCustomerInputName] = useState('');
 
   const [formData, setFormData] = useState({
+    trip_id: '',
     customer_id: '',
     invoice_date: new Date().toISOString().split('T')[0],
     due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -48,9 +50,19 @@ export const InvoicesPage: React.FC = () => {
     }
   };
 
+  const fetchTrips = async () => {
+    try {
+      const res = await api.get('/trips/');
+      setTrips(res.data || []);
+    } catch (err) {
+      console.error('Failed to load trips for invoice linking:', err);
+    }
+  };
+
   useEffect(() => {
     fetchInvoices();
     fetchCustomers();
+    fetchTrips();
   }, []);
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -87,6 +99,7 @@ export const InvoicesPage: React.FC = () => {
 
       await api.post('/invoices/', {
         ...formData,
+        trip_id: formData.trip_id || undefined,
         customer_id: finalCustomerId || undefined,
         customer_name: customerInputName.trim() || undefined,
         invoice_date: new Date(formData.invoice_date).toISOString(),
@@ -96,6 +109,7 @@ export const InvoicesPage: React.FC = () => {
       setIsWritingCustomer(false);
       setCustomerInputName('');
       setFormData({
+        trip_id: '',
         customer_id: '',
         invoice_date: new Date().toISOString().split('T')[0],
         due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -163,6 +177,7 @@ export const InvoicesPage: React.FC = () => {
             <tr>
               <th className="py-3 px-4">Invoice #</th>
               <th className="py-3 px-4">Customer</th>
+              <th className="py-3 px-4">Linked Trip</th>
               <th className="py-3 px-4">Date & Due</th>
               <th className="py-3 px-4">Total Amount</th>
               <th className="py-3 px-4">Balance Due</th>
@@ -174,6 +189,19 @@ export const InvoicesPage: React.FC = () => {
               <tr key={inv.id} className="hover:bg-slate-50/60">
                 <td className="py-3 px-4 font-bold text-blue-700">{inv.invoice_number}</td>
                 <td className="py-3 px-4 font-medium text-slate-800">{inv.customer?.name}</td>
+                <td className="py-3 px-4">
+                  {inv.trip_id ? (() => {
+                    const linked = trips.find(t => t.id === inv.trip_id);
+                    return (
+                      <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200" title={linked ? `Route: ${linked.pickup_city || linked.route?.pickup_city} -> ${linked.delivery_city || linked.route?.delivery_city}` : ''}>
+                        <Truck size={10} />
+                        <span>{linked ? linked.trip_number : 'Trip Linked'}</span>
+                      </span>
+                    );
+                  })() : (
+                    <span className="text-[10px] text-slate-400 italic">Direct</span>
+                  )}
+                </td>
                 <td className="py-3 px-4">
                   <div>{new Date(inv.invoice_date).toLocaleDateString()}</div>
                   <div className="text-[10px] text-slate-400">Due: {new Date(inv.due_date).toLocaleDateString()}</div>
@@ -316,7 +344,77 @@ export const InvoicesPage: React.FC = () => {
               <h3 className="text-base font-bold text-slate-800">Generate Invoice</h3>
               <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-600">&times;</button>
             </div>
-            <form onSubmit={handleCreate} className="space-y-3 text-xs">
+            <form onSubmit={handleCreate} className="space-y-3.5 text-xs">
+              {/* Trip Selector Card */}
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-slate-800 flex items-center gap-1.5 text-xs">
+                    <Truck size={14} className="text-blue-600" />
+                    <span>Select Trip to Invoice (Auto-Fills Details)</span>
+                  </label>
+                  {formData.trip_id && (
+                    <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300">
+                      ✓ Trip Linked
+                    </span>
+                  )}
+                </div>
+                <select
+                  value={formData.trip_id}
+                  onChange={(e) => {
+                    const tId = e.target.value;
+                    const selectedTrip = trips.find(t => t.id === tId);
+                    if (selectedTrip) {
+                      const cId = selectedTrip.customer?.id || selectedTrip.customer_id || '';
+                      const cName = selectedTrip.customer?.name || '';
+                      setCustomerInputName(cName);
+                      setIsWritingCustomer(false);
+                      const freight = selectedTrip.financials?.freight_charges !== undefined
+                        ? selectedTrip.financials.freight_charges
+                        : (selectedTrip.freight_charges || selectedTrip.total_revenue || 0);
+                      const tax = selectedTrip.financials?.tax_amount !== undefined
+                        ? selectedTrip.financials.tax_amount
+                        : (selectedTrip.tax_amount || 0);
+
+                      setFormData(prev => ({
+                        ...prev,
+                        trip_id: tId,
+                        customer_id: cId,
+                        subtotal: freight,
+                        tax_amount: tax,
+                        notes: `Consignment Trip: ${selectedTrip.trip_number} | Route: ${selectedTrip.pickup_city || selectedTrip.route?.pickup_city || ''} to ${selectedTrip.delivery_city || selectedTrip.route?.delivery_city || ''} | Vehicle: ${selectedTrip.vehicle?.vehicle_number || ''}`
+                      }));
+                    } else {
+                      setFormData(prev => ({ ...prev, trip_id: '' }));
+                    }
+                  }}
+                  className="w-full p-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500 font-medium"
+                >
+                  <option value="">-- Direct Billing (No Trip Selected) --</option>
+                  {trips.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.trip_number} • {t.customer?.name} • {t.pickup_city || t.route?.pickup_city} → {t.delivery_city || t.route?.delivery_city} (INR {(t.financials?.freight_charges || t.freight_charges || t.total_revenue || 0).toLocaleString('en-IN')})
+                    </option>
+                  ))}
+                </select>
+
+                {formData.trip_id && (() => {
+                  const t = trips.find(trip => trip.id === formData.trip_id);
+                  if (!t) return null;
+                  return (
+                    <div className="p-2 bg-blue-50/80 rounded-lg border border-blue-200 text-[11px] text-blue-900 space-y-0.5">
+                      <div className="flex justify-between font-bold">
+                        <span>Route: {t.pickup_city || t.route?.pickup_city} &rarr; {t.delivery_city || t.route?.delivery_city}</span>
+                        <span>Vehicle: {t.vehicle?.vehicle_number || 'Commercial Truck'}</span>
+                      </div>
+                      <div className="text-[10px] text-blue-700 flex justify-between">
+                        <span>Cargo: {t.cargo?.description || t.cargo_description || 'General Cargo'} ({t.cargo?.weight_tonnes || t.cargo_weight_tonnes || 0} MT)</span>
+                        <span>Driver: {t.driver?.name || 'Assigned Driver'}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
               <div>
                 <div className="flex items-center justify-between">
                   <label className="font-semibold text-slate-700">Customer *</label>
