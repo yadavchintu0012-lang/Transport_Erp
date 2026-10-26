@@ -13,7 +13,8 @@ import {
   LogOut,
   ChevronRight,
   X,
-  Layers
+  Layers,
+  Code2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -51,6 +52,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, setCurrentTab, isO
     { id: 'staff', label: 'Staff & Roles', icon: ShieldCheck, module: 'staff', action: 'view' },
     { id: 'subscriptions', label: 'Subscription Plan', icon: CreditCard, module: 'settings', action: 'view' },
     { id: 'audit', label: 'Audit Trail', icon: Settings, module: 'settings', action: 'view' },
+    { id: 'developer', label: 'Developer & Rights', icon: Code2, module: 'dashboard', action: 'view' },
   ];
 
   const filteredErpItems = erpNavItems.filter(item => hasPermission(item.module, item.action));

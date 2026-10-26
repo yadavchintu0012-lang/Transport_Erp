@@ -74,6 +74,25 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, []);
 
+  // Ensure notification for Developer Profile is presented in Notification Center
+  useEffect(() => {
+    setNotifications((prev) => {
+      const devNotifId = 'system-dev-profile-v2.4.6';
+      if (prev.some((n) => n.id === devNotifId)) return prev;
+      return [
+        {
+          id: devNotifId,
+          type: 'system',
+          title: '👨‍💻 Developer Profile Live: Chintu Kumar',
+          message: 'New Developer Section is now available under ERP Operations. Meet Lead Architect Chintu Kumar (B.Tech in AI & DS), view credentials, and copyright protection.',
+          timestamp: Date.now(),
+          isRead: false,
+        },
+        ...prev
+      ];
+    });
+  }, []);
+
   // When an app update is detected or remote version is available, ensure an Update Notification exists
   useEffect(() => {
     if (isUpdateAvailable && remoteVersion) {

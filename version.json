@@ -1,14 +1,14 @@
 {
-  "version": "2.4.5",
-  "buildDate": "2026-10-27T03:16:00Z",
-  "buildTimestamp": 1793051760000,
-  "title": "TransportPro ERP v2.4.5",
-  "description": "Standard Professional 1-Page Tax Invoice & Trip Linking",
+  "version": "2.4.6",
+  "buildDate": "2026-10-27T03:25:00Z",
+  "buildTimestamp": 1793052300000,
+  "title": "TransportPro ERP v2.4.6",
+  "description": "Developer Section: Chintu Kumar (B.Tech in AI & DS) & All Rights Reserved",
   "features": [
-    "Standardized 1-page professional tax invoice layout (A4 portrait)",
-    "Invoice generation linked directly to selected trip",
-    "Auto-fills customer, freight charges, and route movement",
-    "Indian GTA SAC 996511 compliant with RCM declaration & INR words",
-    "Strict 1-page A4 print stylesheet with zero page overflow"
+    "New Developer Section under ERP Operations navigation",
+    "Lead Architect Profile: Chintu Kumar, B.Tech in AI & DS (IIMT 1994)",
+    "Comprehensive All Rights Reserved, Copyright & Intellectual Property notice",
+    "System competencies, architectural milestones, and official contact channels",
+    "Notification Center alert for new developer and software updates"
   ]
 }

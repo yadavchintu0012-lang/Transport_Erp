@@ -20,6 +20,7 @@ import { ReportsPage } from './pages/ReportsPage';
 import { StaffPage } from './pages/StaffPage';
 import { SubscriptionsPage } from './pages/SubscriptionsPage';
 import { AuditPage } from './pages/AuditPage';
+import { DeveloperPage } from './pages/DeveloperPage';
 
 // SaaS Admin Pages
 import { SaasDashboard } from './pages/saas/SaasDashboard';
@@ -96,6 +97,7 @@ const AppContent: React.FC = () => {
       case 'staff': return 'Staff Administration & Granular RBAC';
       case 'subscriptions': return 'SaaS Plan & Billing';
       case 'audit': return 'System Activity Audit Trail';
+      case 'developer': return 'Developer & System Architect Profile';
       default: return 'TransportPro ERP';
     }
   };
@@ -188,6 +190,7 @@ const AppContent: React.FC = () => {
                   {currentTab === 'staff' && <StaffPage />}
                   {currentTab === 'subscriptions' && <SubscriptionsPage />}
                   {currentTab === 'audit' && <AuditPage />}
+                  {currentTab === 'developer' && <DeveloperPage />}
                 </>
               )}
             </main>
