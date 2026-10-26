@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Bell, Building, Smartphone, WifiOff, RefreshCw, CheckCircle2, Radio, Truck, Sparkles } from 'lucide-react';
+import { Menu, Bell, Building, Smartphone, WifiOff, RefreshCw, CheckCircle2, Radio, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useOfflineSync } from '../services/syncEngine';
 import { useAppUpdate } from '../context/UpdateContext';
@@ -91,16 +91,6 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           </button>
         )}
 
-        {/* 1. Direct Preview Button: 3D Truck Loading Animation */}
-        <button
-          onClick={onShowLoadingModal}
-          className="flex items-center space-x-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-full text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
-          title="Click to test the 3D Highway Truck Loading Animation"
-        >
-          <Truck size={14} className="text-blue-600 animate-bounce" />
-          <span className="hidden xs:inline">3D</span>
-          <span>Loader</span>
-        </button>
 
         {/* 2. Direct Preview Button: 3D Offline Interactive Screen */}
         <button 

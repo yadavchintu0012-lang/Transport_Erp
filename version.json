@@ -1,13 +1,13 @@
 {
-  "version": "2.4.2",
-  "buildDate": "2026-10-27T02:51:00Z",
-  "buildTimestamp": 1793050260000,
-  "title": "TransportPro ERP v2.4.2",
-  "description": "Notification Center & In-Notification Release Updates",
+  "version": "2.4.3",
+  "buildDate": "2026-10-27T02:57:00Z",
+  "buildTimestamp": 1793050620000,
+  "title": "TransportPro ERP v2.4.3",
+  "description": "Clean Top Navigation Header & Notification Updates",
   "features": [
-    "Notification Center added to top Bell icon with unread badge counter",
-    "In-Notification 1-Click [Update App Now] action button",
-    "Write/Type customer name directly or select from suggestions",
-    "Service Worker v13 instant cache-purge update pipeline"
+    "Removed loader preview icon from header navbar for a cleaner layout",
+    "Retained 3D truck loading animation on startup and dashboard",
+    "Notification Center with unread counter & 1-click update",
+    "Write/Type customer name directly in Trips & Invoices"
   ]
 }
