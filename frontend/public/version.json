@@ -1,12 +1,13 @@
 {
-  "version": "2.4.3",
-  "buildDate": "2026-10-27T02:57:00Z",
-  "buildTimestamp": 1793050620000,
-  "title": "TransportPro ERP v2.4.3",
-  "description": "Clean Top Navigation Header & Notification Updates",
+  "version": "2.4.4",
+  "buildDate": "2026-10-27T03:02:00Z",
+  "buildTimestamp": 1793050920000,
+  "title": "TransportPro ERP v2.4.4",
+  "description": "Clean Header Navigation & Full Feature Retention",
   "features": [
-    "Removed loader preview icon from header navbar for a cleaner layout",
-    "Retained 3D truck loading animation on startup and dashboard",
+    "Removed offline preview icon from header navbar for clean UI",
+    "Retained automatic 3D offline screen detection on network loss",
+    "Retained 3D truck loading screen animation on startup and dashboard",
     "Notification Center with unread counter & 1-click update",
     "Write/Type customer name directly in Trips & Invoices"
   ]

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Bell, Building, Smartphone, WifiOff, RefreshCw, CheckCircle2, Radio, Sparkles } from 'lucide-react';
+import { Menu, Bell, Building, Smartphone, WifiOff, RefreshCw, CheckCircle2, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useOfflineSync } from '../services/syncEngine';
 import { useAppUpdate } from '../context/UpdateContext';
@@ -92,16 +92,6 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
         )}
 
 
-        {/* 2. Direct Preview Button: 3D Offline Interactive Screen */}
-        <button 
-          onClick={onShowOfflineModal}
-          className="flex items-center space-x-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 rounded-full text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
-          title="Click to test the 3D Offline Radar Truck Screen"
-        >
-          <Radio size={14} className="text-rose-600 animate-pulse" />
-          <span className="hidden xs:inline">3D</span>
-          <span>Offline</span>
-        </button>
 
         {/* Install Mobile App Button */}
         <button
