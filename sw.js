@@ -1,5 +1,5 @@
 // TransportPro ERP - PWA Service Worker for Offline & Mobile Caching
-const CACHE_NAME = 'transportpro-cache-v10-nuclear';
+const CACHE_NAME = 'transportpro-cache-v11-write-customer';
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -8,7 +8,9 @@ const CORE_ASSETS = [
   '/icon-192.png',
   '/icon-512.png',
   '/icon-192-maskable.png',
-  '/icon-512-maskable.png'
+  '/icon-512-maskable.png',
+  '/assets/index-azi38JTE.js',
+  '/assets/index-B7VN7eNq.css'
 ];
 
 self.addEventListener('install', (event) => {

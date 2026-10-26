@@ -57,14 +57,21 @@
       <style>@keyframes floatTruck{0%,to{transform:translate(-50%,-50%)translateY(0)}50%{transform:translate(-50%,-50%)translateY(-5px)}}@keyframes loadBar{0%{transform:translate(-100%)}to{transform:translate(250%)}}</style>
     </div>
     <script>
-      // Register Service Worker for PWA
+      // Register Service Worker for PWA with cache buster and auto-reload on update
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').then((reg) => {
+          navigator.serviceWorker.register('/sw.js?v=20261027-v11').then((reg) => {
             reg.update();
           }).catch((err) => {
             console.log('SW registration note:', err);
           });
+        });
+
+        navigator.serviceWorker.addEventListener('message', (event) => {
+          if (event.data && event.data.type === 'RELOAD_NEW_VERSION') {
+            console.log('[SW] New version activated, reloading...');
+            window.location.reload();
+          }
         });
       }
     </script>
