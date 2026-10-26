@@ -3,6 +3,8 @@ import { Menu, Bell, Building, Smartphone, WifiOff, RefreshCw, CheckCircle2, Rad
 import { useAuth } from '../context/AuthContext';
 import { useOfflineSync } from '../services/syncEngine';
 import { useAppUpdate } from '../context/UpdateContext';
+import { useAppNotifications } from '../context/NotificationContext';
+import { NotificationDropdown } from './NotificationDropdown';
 
 interface TopNavbarProps {
   onToggleSidebar: () => void;
@@ -20,9 +22,11 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   const { organization, role } = useAuth();
   const { isOnline, pendingCount, isSyncing, syncNow } = useOfflineSync();
   const { currentVersion, remoteVersion, isUpdateAvailable, isChecking, setShowModal, checkForUpdates } = useAppUpdate();
+  const { unreadCount, hasPendingUpdate } = useAppNotifications();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   const handleCheckUpdate = async () => {
     if (isUpdateAvailable) {
@@ -151,12 +155,34 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           <span className="text-blue-700 font-semibold">{role?.name || 'Company Owner'}</span>
         </div>
 
-        {/* Notification bell */}
+        {/* Notification bell & dropdown */}
         <div className="relative">
-          <button className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors cursor-pointer">
-            <Bell size={18} />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white"></span>
+          <button 
+            onClick={() => setNotificationsOpen(!notificationsOpen)}
+            className={`p-2 rounded-full transition-all cursor-pointer relative ${
+              notificationsOpen 
+                ? 'bg-blue-50 text-blue-600 ring-2 ring-blue-500/20' 
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+            title="Notifications & System Updates"
+          >
+            <Bell size={18} className={hasPendingUpdate ? 'animate-bounce text-blue-600' : ''} />
+            
+            {/* Unread count badge */}
+            {unreadCount > 0 && (
+              <span className={`absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 text-[10px] font-extrabold rounded-full flex items-center justify-center text-white ring-2 ring-white shadow-xs ${
+                hasPendingUpdate ? 'bg-gradient-to-r from-blue-600 to-indigo-600 animate-pulse' : 'bg-rose-500'
+              }`}>
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
           </button>
+
+          {/* Notification Dropdown Panel */}
+          <NotificationDropdown
+            isOpen={notificationsOpen}
+            onClose={() => setNotificationsOpen(false)}
+          />
         </div>
       </div>
 

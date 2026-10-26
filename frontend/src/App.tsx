@@ -6,6 +6,7 @@ import { AuthModal } from './components/AuthModal';
 import { Loading3D } from './components/Loading3D';
 import { OfflineScreen3D } from './components/OfflineScreen3D';
 import { UpdateProvider } from './context/UpdateContext';
+import { NotificationProvider } from './context/NotificationContext';
 import { AppUpdatePrompt } from './components/AppUpdatePrompt';
 
 import { Dashboard } from './pages/Dashboard';
@@ -201,7 +202,9 @@ export default function App() {
   return (
     <AuthProvider>
       <UpdateProvider>
-        <AppContent />
+        <NotificationProvider>
+          <AppContent />
+        </NotificationProvider>
       </UpdateProvider>
     </AuthProvider>
   );

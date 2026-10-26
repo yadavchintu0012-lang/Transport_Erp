@@ -1,5 +1,5 @@
 // TransportPro ERP - PWA Service Worker for Offline & Mobile Caching
-const CACHE_NAME = 'transportpro-cache-v12-inapp-update';
+const CACHE_NAME = 'transportpro-cache-v13-notification-center';
 const CORE_ASSETS = [
   '/',
   '/index.html',
