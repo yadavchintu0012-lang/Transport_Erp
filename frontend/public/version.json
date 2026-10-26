@@ -1,0 +1,13 @@
+{
+  "version": "2.4.1",
+  "buildDate": "2026-10-27T02:40:00Z",
+  "buildTimestamp": 1793049600000,
+  "title": "TransportPro ERP v2.4.1",
+  "description": "Customer Name Typing & In-App Auto-Updates",
+  "features": [
+    "Write/Type customer name directly or select from suggestions",
+    "Auto-creates customer record seamlessly on trip & invoice dispatch",
+    "In-app instant update notification with 1-click refresh",
+    "Direct check for updates button in top navigation bar"
+  ]
+}

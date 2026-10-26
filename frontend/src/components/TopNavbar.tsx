@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Bell, Building, Smartphone, WifiOff, RefreshCw, CheckCircle2, Radio, Truck } from 'lucide-react';
+import { Menu, Bell, Building, Smartphone, WifiOff, RefreshCw, CheckCircle2, Radio, Truck, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useOfflineSync } from '../services/syncEngine';
+import { useAppUpdate } from '../context/UpdateContext';
 
 interface TopNavbarProps {
   onToggleSidebar: () => void;
@@ -18,8 +19,24 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
 }) => {
   const { organization, role } = useAuth();
   const { isOnline, pendingCount, isSyncing, syncNow } = useOfflineSync();
+  const { currentVersion, remoteVersion, isUpdateAvailable, isChecking, setShowModal, checkForUpdates } = useAppUpdate();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstallable, setIsInstallable] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const handleCheckUpdate = async () => {
+    if (isUpdateAvailable) {
+      setShowModal(true);
+      return;
+    }
+    const res = await checkForUpdates(true);
+    if (res.updated) {
+      setShowModal(true);
+    } else {
+      setToastMessage(`✓ App is up to date (v${currentVersion})`);
+      setTimeout(() => setToastMessage(null), 3500);
+    }
+  };
 
   useEffect(() => {
     const handler = (e: any) => {
@@ -102,6 +119,30 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           <span>Install App</span>
         </button>
 
+        {/* In-App Update Button */}
+        {isUpdateAvailable ? (
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-full text-xs font-bold transition-all shadow-md shadow-emerald-600/30 cursor-pointer animate-pulse active:scale-95"
+            title="New update ready! Click to view and update app"
+          >
+            <Sparkles size={13} className="text-yellow-300 animate-spin-slow" />
+            <span>Update App</span>
+            <span className="bg-white/25 text-[10px] px-1.5 py-0.2 rounded-full font-extrabold">v{remoteVersion?.version || 'new'}</span>
+          </button>
+        ) : (
+          <button
+            onClick={handleCheckUpdate}
+            disabled={isChecking}
+            className="flex items-center space-x-1.5 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-full text-xs font-medium transition-all shadow-2xs cursor-pointer active:scale-95 disabled:opacity-60"
+            title="Click to check for newest version of TransportPro ERP"
+          >
+            <RefreshCw size={12} className={`text-slate-500 ${isChecking ? 'animate-spin text-blue-600' : ''}`} />
+            <span className="font-semibold text-slate-800">v{currentVersion}</span>
+            <span className="hidden sm:inline text-slate-500 text-[11px]">{isChecking ? 'Checking...' : 'Check'}</span>
+          </button>
+        )}
+
         {/* Organization pill */}
         <div className="hidden md:flex items-center space-x-2 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-xs font-medium text-slate-700">
           <Building size={14} className="text-blue-600" />
@@ -118,6 +159,14 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Floating Status Toast */}
+      {toastMessage && (
+        <div className="fixed top-18 right-6 z-50 bg-slate-900 text-emerald-400 border border-emerald-500/50 shadow-2xl px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+          <CheckCircle2 size={16} className="text-emerald-400" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
     </header>
   );
 };

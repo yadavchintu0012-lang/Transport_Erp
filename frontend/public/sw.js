@@ -1,5 +1,5 @@
 // TransportPro ERP - PWA Service Worker for Offline & Mobile Caching
-const CACHE_NAME = 'transportpro-cache-v11-write-customer';
+const CACHE_NAME = 'transportpro-cache-v12-inapp-update';
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -8,9 +8,7 @@ const CORE_ASSETS = [
   '/icon-192.png',
   '/icon-512.png',
   '/icon-192-maskable.png',
-  '/icon-512-maskable.png',
-  '/assets/index-azi38JTE.js',
-  '/assets/index-B7VN7eNq.css'
+  '/icon-512-maskable.png'
 ];
 
 self.addEventListener('install', (event) => {
@@ -20,6 +18,12 @@ self.addEventListener('install', (event) => {
       return cache.addAll(CORE_ASSETS);
     })
   );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('activate', (event) => {
@@ -46,8 +50,8 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = event.request.url;
 
-  // Let backend API requests bypass Service Worker (handled by IndexedDB offline layer in api.ts)
-  if (url.includes('/api/')) {
+  // Let backend API and version manifest bypass Service Worker cache
+  if (url.includes('/api/') || url.includes('version.json')) {
     return;
   }
 

@@ -5,6 +5,8 @@ import { TopNavbar } from './components/TopNavbar';
 import { AuthModal } from './components/AuthModal';
 import { Loading3D } from './components/Loading3D';
 import { OfflineScreen3D } from './components/OfflineScreen3D';
+import { UpdateProvider } from './context/UpdateContext';
+import { AppUpdatePrompt } from './components/AppUpdatePrompt';
 
 import { Dashboard } from './pages/Dashboard';
 import { TripsPage } from './pages/TripsPage';
@@ -126,6 +128,9 @@ const AppContent: React.FC = () => {
         />
       )}
 
+      {/* In-App Automatic Update Prompt Notification */}
+      <AppUpdatePrompt />
+
       {!user ? (
         <AuthModal />
       ) : (
@@ -195,7 +200,9 @@ const AppContent: React.FC = () => {
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <UpdateProvider>
+        <AppContent />
+      </UpdateProvider>
     </AuthProvider>
   );
 }
