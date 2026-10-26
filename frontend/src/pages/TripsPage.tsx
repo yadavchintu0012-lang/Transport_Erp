@@ -41,6 +41,10 @@ export const TripsPage: React.FC = () => {
   // Edit trip state
   const [editingTripId, setEditingTripId] = useState<string | null>(null);
 
+  // Write customer name toggle state
+  const [isWritingCustomer, setIsWritingCustomer] = useState(false);
+  const [customerInputName, setCustomerInputName] = useState('');
+
   // Form state
   const [formData, setFormData] = useState({
     trip_date: new Date().toISOString().split('T')[0],
@@ -146,9 +150,13 @@ export const TripsPage: React.FC = () => {
 
   const handleOpenEditTrip = (t: any) => {
     setEditingTripId(t.id);
+    const cId = t.customer?.id || t.customer_id || '';
+    const cName = t.customer?.name || '';
+    setCustomerInputName(cName);
+    setIsWritingCustomer(false);
     setFormData({
       trip_date: t.trip_date ? t.trip_date.split('T')[0] : new Date().toISOString().split('T')[0],
-      customer_id: t.customer?.id || t.customer_id || '',
+      customer_id: cId,
       vehicle_id: t.vehicle?.id || t.vehicle_id || '',
       driver_id: t.driver?.id || t.driver_id || '',
       customer_po_ref: t.customer_po_ref || '',
@@ -185,8 +193,39 @@ export const TripsPage: React.FC = () => {
   const handleCreateTrip = async (e: React.FormEvent, andGenerateInvoice = false) => {
     e.preventDefault();
     try {
+      let finalCustomerId = formData.customer_id;
+
+      if (isWritingCustomer && customerInputName.trim()) {
+        const trimmed = customerInputName.trim();
+        const match = customers.find(c => c.name.toLowerCase() === trimmed.toLowerCase());
+        if (match) {
+          finalCustomerId = match.id;
+        } else {
+          try {
+            const newCustRes = await api.post('/customers/', {
+              name: trimmed,
+              customer_type: 'corporate',
+              status: 'active'
+            });
+            if (newCustRes.data?.id) {
+              finalCustomerId = newCustRes.data.id;
+              setCustomers(prev => [...prev, newCustRes.data]);
+            }
+          } catch (cErr) {
+            console.error('Auto-create customer note:', cErr);
+          }
+        }
+      }
+
+      if (!finalCustomerId && !customerInputName.trim()) {
+        alert('Please select or write a customer name.');
+        return;
+      }
+
       const payload = {
         ...formData,
+        customer_id: finalCustomerId || undefined,
+        customer_name: customerInputName.trim() || undefined,
         trip_date: new Date(formData.trip_date).toISOString()
       };
 
@@ -200,6 +239,8 @@ export const TripsPage: React.FC = () => {
 
       setShowAddModal(false);
       setEditingTripId(null);
+      setIsWritingCustomer(false);
+      setCustomerInputName('');
       fetchTrips();
 
       // Reset form
@@ -311,7 +352,12 @@ export const TripsPage: React.FC = () => {
           )}
           {canCreate && (
             <button
-              onClick={() => setShowAddModal(true)}
+              onClick={() => {
+                setEditingTripId(null);
+                setIsWritingCustomer(false);
+                setCustomerInputName('');
+                setShowAddModal(true);
+              }}
               className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs"
             >
               <Plus size={15} />
@@ -676,16 +722,76 @@ export const TripsPage: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="font-semibold text-slate-700">Customer *</label>
-                  <select
-                    required
-                    value={formData.customer_id}
-                    onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })}
-                    className="w-full mt-1 p-2 border rounded-lg"
-                  >
-                    <option value="">Select Customer</option>
-                    {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
+                  <div className="flex items-center justify-between">
+                    <label className="font-semibold text-slate-700">Customer *</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nextMode = !isWritingCustomer;
+                        setIsWritingCustomer(nextMode);
+                        if (nextMode) {
+                          const found = customers.find(c => c.id === formData.customer_id);
+                          if (found) setCustomerInputName(found.name);
+                        } else {
+                          const found = customers.find(c => c.name.toLowerCase() === customerInputName.trim().toLowerCase());
+                          if (found) setFormData({ ...formData, customer_id: found.id });
+                        }
+                      }}
+                      className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 bg-blue-50 hover:bg-blue-100 px-2 py-0.5 rounded transition cursor-pointer"
+                    >
+                      {isWritingCustomer ? '📋 Pick from List' : '✍️ Write Customer Name'}
+                    </button>
+                  </div>
+                  {isWritingCustomer ? (
+                    <div className="relative mt-1">
+                      <input
+                        type="text"
+                        required
+                        list="customer-suggestions-trips"
+                        value={customerInputName}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setCustomerInputName(val);
+                          const match = customers.find(c => c.name.toLowerCase() === val.trim().toLowerCase());
+                          if (match) {
+                            setFormData(prev => ({ ...prev, customer_id: match.id }));
+                          } else {
+                            setFormData(prev => ({ ...prev, customer_id: '' }));
+                          }
+                        }}
+                        placeholder="Write customer name (e.g. Tata Steel, ABC Logistics)"
+                        className="w-full p-2 border border-blue-400 focus:ring-2 focus:ring-blue-500 rounded-lg text-xs bg-blue-50/20"
+                        autoFocus
+                      />
+                      <datalist id="customer-suggestions-trips">
+                        {customers.map((c) => (
+                          <option key={c.id} value={c.name} />
+                        ))}
+                      </datalist>
+                    </div>
+                  ) : (
+                    <select
+                      required={!isWritingCustomer}
+                      value={formData.customer_id}
+                      onChange={(e) => {
+                        if (e.target.value === '__WRITE_NEW__') {
+                          setIsWritingCustomer(true);
+                          setCustomerInputName('');
+                        } else {
+                          setFormData({ ...formData, customer_id: e.target.value });
+                          const found = customers.find(c => c.id === e.target.value);
+                          if (found) setCustomerInputName(found.name);
+                        }
+                      }}
+                      className="w-full mt-1 p-2 border rounded-lg bg-white"
+                    >
+                      <option value="">Select Customer</option>
+                      {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      <option value="__WRITE_NEW__" className="text-blue-600 font-semibold bg-blue-50">
+                        ✍️ + Write / Enter Customer Name Directly...
+                      </option>
+                    </select>
+                  )}
                 </div>
                 <div>
                   <label className="font-semibold text-slate-700">PO / Reference No.</label>

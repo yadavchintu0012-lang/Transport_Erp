@@ -128,7 +128,8 @@ class CustomerUpdateRequest(BaseModel):
 # --- Trip Schemas ---
 class TripCreateRequest(BaseModel):
     trip_date: datetime
-    customer_id: str
+    customer_id: Optional[str] = None
+    customer_name: Optional[str] = None
     vehicle_id: str
     driver_id: str
     customer_po_ref: Optional[str] = None
@@ -157,6 +158,7 @@ class TripCreateRequest(BaseModel):
 class TripUpdateRequest(BaseModel):
     trip_date: Optional[datetime] = None
     customer_id: Optional[str] = None
+    customer_name: Optional[str] = None
     vehicle_id: Optional[str] = None
     driver_id: Optional[str] = None
     customer_po_ref: Optional[str] = None
@@ -212,7 +214,8 @@ class ExpenseUpdateRequest(BaseModel):
 
 # --- Invoice & Payment Schemas ---
 class InvoiceCreateRequest(BaseModel):
-    customer_id: str
+    customer_id: Optional[str] = None
+    customer_name: Optional[str] = None
     trip_id: Optional[str] = None
     invoice_date: datetime
     due_date: datetime

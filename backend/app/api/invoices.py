@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import Optional, List
 from datetime import datetime, timezone
 
@@ -10,6 +11,36 @@ from app.core.dependencies import get_current_context, CurrentContext, require_p
 from app.services.audit import log_audit
 
 router = APIRouter(prefix="/invoices", tags=["Invoices & Accounting"])
+
+def resolve_or_create_customer(db: Session, org_id: str, customer_id: Optional[str] = None, customer_name: Optional[str] = None) -> str:
+    if customer_id:
+        existing = db.query(Customer).filter(Customer.organization_id == org_id, Customer.id == customer_id).first()
+        if existing:
+            return existing.id
+
+    name_to_check = (customer_name or "").strip()
+    if not name_to_check and customer_id:
+        name_to_check = customer_id.strip()
+
+    if not name_to_check:
+        raise HTTPException(status_code=400, detail="Customer name or valid customer ID is required.")
+
+    existing_by_name = db.query(Customer).filter(
+        Customer.organization_id == org_id,
+        func.lower(Customer.name) == func.lower(name_to_check)
+    ).first()
+    if existing_by_name:
+        return existing_by_name.id
+
+    new_cust = Customer(
+        organization_id=org_id,
+        name=name_to_check,
+        customer_type="corporate",
+        status="active"
+    )
+    db.add(new_cust)
+    db.flush()
+    return new_cust.id
 
 def generate_invoice_number(db: Session, org_id: str) -> str:
     count = db.query(Invoice).filter(Invoice.organization_id == org_id).count() + 1
@@ -67,12 +98,13 @@ def create_invoice(
     context: CurrentContext = Depends(require_permission("accounts", "create"))
 ):
     inv_no = generate_invoice_number(db, context.organization_id)
+    target_cust_id = resolve_or_create_customer(db, context.organization_id, data.customer_id, data.customer_name)
     total = data.subtotal + (data.tax_amount or 0.0)
 
     invoice = Invoice(
         organization_id=context.organization_id,
         invoice_number=inv_no,
-        customer_id=data.customer_id,
+        customer_id=target_cust_id,
         trip_id=data.trip_id,
         invoice_date=data.invoice_date,
         due_date=data.due_date,
