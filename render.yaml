@@ -15,8 +15,9 @@ services:
   - type: web
     name: transport-erp-frontend
     runtime: static
-    buildCommand: npm --prefix frontend run build
-    staticPublishPath: frontend/dist
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
     routes:
       - type: rewrite
         source: /api/*
