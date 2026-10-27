@@ -234,7 +234,7 @@ def create_trip(
         other_direct_expense=data.other_direct_expense,
         total_expenses=total_exp,
         trip_profit=trip_prof,
-        status="dispatched",
+        status=data.status or "completed",
         created_by_user_id=context.user.id
     )
     db.add(trip)
@@ -242,10 +242,10 @@ def create_trip(
     # Update vehicle & driver status
     veh = db.query(Vehicle).filter(Vehicle.id == data.vehicle_id).first()
     if veh:
-        veh.status = "on_trip"
+        veh.status = "available" if (data.status or "completed") == "completed" else "on_trip"
     drv = db.query(Driver).filter(Driver.id == data.driver_id).first()
     if drv:
-        drv.status = "on_trip"
+        drv.status = "available" if (data.status or "completed") == "completed" else "on_trip"
 
     db.commit()
     db.refresh(trip)

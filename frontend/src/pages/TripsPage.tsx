@@ -224,6 +224,7 @@ export const TripsPage: React.FC = () => {
 
       const payload = {
         ...formData,
+        status: 'completed',
         customer_id: finalCustomerId || undefined,
         customer_name: customerInputName.trim() || undefined,
         trip_date: new Date(formData.trip_date).toISOString()
@@ -388,10 +389,6 @@ export const TripsPage: React.FC = () => {
             className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 focus:outline-none"
           >
             <option value="">All Statuses</option>
-            <option value="scheduled">Scheduled</option>
-            <option value="dispatched">Dispatched</option>
-            <option value="in_transit">In Transit</option>
-            <option value="delivered">Delivered</option>
             <option value="completed">Completed</option>
             <option value="cancelled">Cancelled</option>
           </select>
@@ -534,21 +531,31 @@ export const TripsPage: React.FC = () => {
                 <th className="py-3 px-4">Route & Cargo</th>
                 <th className="py-3 px-4">Fleet & Driver</th>
                 <th className="py-3 px-4">Financials</th>
-                <th className="py-3 px-4">Status & Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {trips.length > 0 ? (
                 trips.map((t) => (
                   <tr key={t.id} className="hover:bg-slate-50/60">
-                    {/* Trip Details */}
+                    {/* Trip Details & Quick Actions */}
                     <td className="py-3 px-4">
-                      <div className="flex items-center space-x-1.5">
+                      <div className="flex items-center space-x-1.5 flex-wrap gap-1">
                         <span className="font-bold text-blue-700">{t.trip_number}</span>
+                        <span className={`px-2 py-0.5 rounded-full font-medium text-[10px] ${
+                          t.status === 'completed' ? 'bg-emerald-100 text-emerald-800' :
+                          t.status === 'in_transit' ? 'bg-blue-100 text-blue-800' :
+                          t.status === 'cancelled' ? 'bg-rose-100 text-rose-800' :
+                          'bg-amber-100 text-amber-800'
+                        }`}>
+                          {t.status.replace('_', ' ')}
+                        </span>
                         {(t._isOffline || (typeof t.id === 'string' && t.id.startsWith('offline_')) || t.sync_status === 'pending') && (
                           <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300" title="Saved locally on this device. Will upload to cloud once connected.">
                             🟡 Pending Sync
                           </span>
+                        )}
+                        {t.is_approved && (
+                          <span title="Approved" className="text-emerald-500"><CheckCircle size={13} /></span>
                         )}
                       </div>
                       <div className="text-[11px] text-slate-400 mt-0.5">
@@ -556,6 +563,39 @@ export const TripsPage: React.FC = () => {
                       </div>
                       <div className="text-[11px] font-medium text-slate-800 mt-1">
                         {t.customer?.name}
+                      </div>
+
+                      {/* Integrated Action Shortcuts (Invoice, Edit, Delete, Status) */}
+                      <div className="flex items-center space-x-1.5 mt-2 flex-wrap gap-1">
+                        <button
+                          onClick={() => handleOpenInvoice(t.id)}
+                          className="flex items-center space-x-1 px-2 py-0.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded text-[11px] font-semibold border border-blue-200 transition-colors cursor-pointer"
+                          title="Generate & View Tax Invoice"
+                        >
+                          <FileText size={11} />
+                          <span>Invoice</span>
+                        </button>
+
+                        {canEdit && (
+                          <button
+                            onClick={() => handleOpenEditTrip(t)}
+                            className="flex items-center space-x-1 px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[11px] font-semibold border border-slate-200 transition-colors cursor-pointer"
+                            title="Edit Trip Details"
+                          >
+                            <Pencil size={11} />
+                            <span>Edit</span>
+                          </button>
+                        )}
+
+                        {canDelete && (
+                          <button
+                            onClick={() => handleDeleteTrip(t.id, t.trip_number)}
+                            className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded transition-colors cursor-pointer"
+                            title="Delete Trip"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        )}
                       </div>
                     </td>
 
@@ -601,89 +641,11 @@ export const TripsPage: React.FC = () => {
                         <span className="text-[11px] text-slate-400 italic">Restricted</span>
                       )}
                     </td>
-
-                    {/* Status & Actions */}
-                    <td className="py-3 px-4">
-                      <div className="flex items-center space-x-2">
-                        <span className={`px-2 py-0.5 rounded-full font-medium text-[11px] ${
-                          t.status === 'completed' ? 'bg-emerald-100 text-emerald-800' :
-                          t.status === 'in_transit' ? 'bg-blue-100 text-blue-800' :
-                          t.status === 'cancelled' ? 'bg-rose-100 text-rose-800' :
-                          'bg-amber-100 text-amber-800'
-                        }`}>
-                          {t.status.replace('_', ' ')}
-                        </span>
-                        {t.is_approved ? (
-                          <span title="Approved" className="text-emerald-500"><CheckCircle size={15} /></span>
-                        ) : canApprove && (
-                          <button
-                            onClick={() => handleApprove(t.id)}
-                            className="text-[10px] bg-slate-100 hover:bg-slate-200 px-1.5 py-0.5 rounded text-slate-700"
-                          >
-                            Approve
-                          </button>
-                        )}
-                        {/* Invoice Generator button */}
-                        <button
-                          onClick={() => handleOpenInvoice(t.id)}
-                          className="flex items-center space-x-1 px-2 py-0.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded text-[11px] font-semibold border border-blue-200 transition-colors"
-                          title="Generate & View Tax Invoice"
-                        >
-                          <FileText size={12} />
-                          <span>Invoice</span>
-                        </button>
-
-                        {/* Edit Trip button */}
-                        {canEdit && (
-                          <button
-                            onClick={() => handleOpenEditTrip(t)}
-                            className="flex items-center space-x-1 px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[11px] font-semibold border border-slate-200 transition-colors cursor-pointer"
-                            title="Edit Trip Details"
-                          >
-                            <Pencil size={11} />
-                            <span>Edit</span>
-                          </button>
-                        )}
-
-                        {/* Delete Trip button */}
-                        {canDelete && (
-                          <button
-                            onClick={() => handleDeleteTrip(t.id, t.trip_number)}
-                            className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded transition-colors cursor-pointer"
-                            title="Delete Trip"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        )}
-                      </div>
-
-                      {/* Quick Status Changers */}
-                      {t.status !== 'completed' && t.status !== 'cancelled' && (
-                        <div className="mt-2 flex items-center space-x-1">
-                          {t.status === 'dispatched' && (
-                            <button
-                              onClick={() => handleUpdateStatus(t.id, 'in_transit')}
-                              className="text-[10px] text-blue-600 hover:underline"
-                            >
-                              Dispatch to In-Transit &rarr;
-                            </button>
-                          )}
-                          {t.status === 'in_transit' && (
-                            <button
-                              onClick={() => handleUpdateStatus(t.id, 'completed')}
-                              className="text-[10px] text-emerald-600 hover:underline font-semibold"
-                            >
-                              Mark Delivered &rarr;
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-400">
+                  <td colSpan={4} className="py-8 text-center text-slate-400">
                     No trips match the selected criteria.
                   </td>
                 </tr>
@@ -1020,7 +982,7 @@ export const TripsPage: React.FC = () => {
                     type="submit"
                     className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-lg cursor-pointer"
                   >
-                    {editingTripId ? 'Save & Update Trip' : 'Confirm & Dispatch'}
+                    {editingTripId ? 'Save & Update Trip' : 'Save & Complete Trip'}
                   </button>
                   <button
                     type="button"
@@ -1028,7 +990,7 @@ export const TripsPage: React.FC = () => {
                     className="flex items-center space-x-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm cursor-pointer"
                   >
                     <FileText size={15} />
-                    <span>{editingTripId ? 'Update & View Invoice' : 'Dispatch & Generate Invoice'}</span>
+                    <span>{editingTripId ? 'Update & View Invoice' : 'Complete & Generate Invoice'}</span>
                   </button>
                 </div>
               </div>

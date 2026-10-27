@@ -154,9 +154,11 @@ class TripCreateRequest(BaseModel):
     driver_allowance: float = 0.0
     loading_unloading_expense: float = 0.0
     other_direct_expense: float = 0.0
+    status: Optional[str] = "completed"
 
 class TripUpdateRequest(BaseModel):
     trip_date: Optional[datetime] = None
+    status: Optional[str] = None
     customer_id: Optional[str] = None
     customer_name: Optional[str] = None
     vehicle_id: Optional[str] = None

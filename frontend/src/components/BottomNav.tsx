@@ -15,7 +15,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   isSidebarOpen = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [touchActiveIndex, setTouchActiveIndex] = useState<number | null>(null);
+  const [dragProgress, setDragProgress] = useState<number | null>(null);
+  const lastVibratedIndexRef = useRef<number>(-1);
 
   const navItems = [
     { id: 'dashboard', label: 'Home', icon: Home },
@@ -37,60 +38,66 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   };
 
   const activeIndex = getActiveIndex();
+  // Display index follows touch drag continuously in real-time, or snaps to active tab
+  const displayIndex = dragProgress !== null ? dragProgress : activeIndex;
 
-  // Haptic vibration feedback for mobile devices (vibrate during scrolling/tapping)
+  // Haptic vibration feedback for mobile devices
   const triggerVibrate = (pattern: number | number[] = 20) => {
     if (typeof window !== 'undefined' && 'vibrate' in navigator) {
       try {
         navigator.vibrate(pattern);
       } catch {
-        // Safe fallback if permission restricted or desktop
+        // Safe fallback
       }
     }
   };
 
-  // Scroll / Drag along the bottom navigation bar with real-time vibration ticks
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!containerRef.current) return;
-    const touch = e.touches[0];
+  const calculateProgressFromTouch = (touchX: number) => {
+    if (!containerRef.current) return 0;
     const rect = containerRef.current.getBoundingClientRect();
-    const x = touch.clientX - rect.left;
-    const tabWidth = rect.width / navItems.length;
-    let index = Math.floor(x / tabWidth);
-    if (index < 0) index = 0;
-    if (index >= navItems.length) index = navItems.length - 1;
+    const relativeX = touchX - rect.left;
+    const ratio = Math.max(0, Math.min(1, relativeX / rect.width));
+    return ratio * (navItems.length - 1);
+  };
 
-    if (touchActiveIndex !== index) {
-      setTouchActiveIndex(index);
-      triggerVibrate(20); // Tactile vibration tick on scrolling to next tab
-      const item = navItems[index];
+  // Touch start: begin Slice-style smooth continuous icon scroll
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const progress = calculateProgressFromTouch(e.touches[0].clientX);
+    const nearestIndex = Math.round(progress);
+    setDragProgress(progress);
+    lastVibratedIndexRef.current = nearestIndex;
+    triggerVibrate(15);
+  };
+
+  // Touch move: fluidly glide round scroller following finger with vibration ticks
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const progress = calculateProgressFromTouch(e.touches[0].clientX);
+    setDragProgress(progress);
+    const nearestIndex = Math.round(progress);
+
+    if (lastVibratedIndexRef.current !== nearestIndex) {
+      lastVibratedIndexRef.current = nearestIndex;
+      triggerVibrate(22); // Real-time vibration tick on each icon passed
+    }
+  };
+
+  // Touch end: magnetically snap to selected tab with haptic confirmation
+  const handleTouchEnd = () => {
+    if (dragProgress !== null) {
+      const finalIndex = Math.max(0, Math.min(navItems.length - 1, Math.round(dragProgress)));
+      triggerVibrate(25);
+      const item = navItems[finalIndex];
       if (item.id === 'more') {
         onOpenMore();
       } else {
         onNavigateTab(item.id);
       }
     }
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (!containerRef.current) return;
-    const touch = e.touches[0];
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = touch.clientX - rect.left;
-    const tabWidth = rect.width / navItems.length;
-    let index = Math.floor(x / tabWidth);
-    if (index < 0) index = 0;
-    if (index >= navItems.length) index = navItems.length - 1;
-    setTouchActiveIndex(index);
-    triggerVibrate(15);
-  };
-
-  const handleTouchEnd = () => {
-    setTouchActiveIndex(null);
+    setDragProgress(null);
   };
 
   const handleClick = (itemId: string, index: number) => {
-    triggerVibrate(25); // Vibrate on direct tap
+    triggerVibrate(25); // Direct tap haptic vibration
     if (itemId === 'more') {
       onOpenMore();
     } else {
@@ -109,34 +116,34 @@ export const BottomNav: React.FC<BottomNavProps> = ({
       >
         {navItems.map((item, index) => {
           const Icon = item.icon;
-          const isActive = index === activeIndex;
+          const isSelected = Math.round(displayIndex) === index;
+          const dist = Math.abs(displayIndex - index);
+          const scale = isSelected ? (dragProgress !== null ? Math.max(1, 1.15 - dist * 0.15) : 1.1) : 1;
 
           return (
             <button
               key={item.id}
               onClick={() => handleClick(item.id, index)}
-              className={`flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-2xl transition-all cursor-pointer relative ${
-                isActive 
+              className={`flex-1 flex flex-col items-center justify-center py-1 px-0.5 rounded-2xl transition-all cursor-pointer relative z-10 ${
+                isSelected 
                   ? 'text-sky-400 font-bold' 
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              {/* Rounded floating pill background behind active icon */}
-              <div className={`relative px-2.5 py-0.5 rounded-full transition-all duration-300 ${
-                isActive 
-                  ? 'bg-sky-500/15 text-sky-400 shadow-[0_0_12px_rgba(56,189,248,0.35)] ring-1 ring-sky-400/40' 
-                  : 'text-slate-400'
-              }`}>
+              <div 
+                className="relative flex items-center justify-center h-8 transition-transform"
+                style={{ transform: `scale(${scale})` }}
+              >
                 <Icon 
                   size={19} 
-                  className={`transition-transform duration-200 ${
-                    isActive ? 'scale-110 text-sky-400 stroke-[2.4]' : 'stroke-[1.8]'
+                  className={`transition-colors ${
+                    isSelected ? 'text-sky-400 stroke-[2.4]' : 'text-slate-400 stroke-[1.8]'
                   }`} 
                 />
               </div>
               
-              <span className={`text-[9.5px] mt-0.5 tracking-tight transition-colors ${
-                isActive ? 'text-sky-400 font-bold' : 'text-slate-400 font-medium'
+              <span className={`text-[9px] sm:text-[9.5px] mt-0.5 tracking-tight transition-colors ${
+                isSelected ? 'text-sky-400 font-bold' : 'text-slate-400 font-medium'
               }`}>
                 {item.label}
               </span>
@@ -145,11 +152,14 @@ export const BottomNav: React.FC<BottomNavProps> = ({
         })}
       </div>
 
-      {/* Round Scroller Track & Glowing Sliding Scroller Indicator (6 Tabs) */}
-      <div className="relative w-52 sm:w-64 h-2 bg-slate-900/90 border border-slate-800 rounded-full mx-auto mt-1 mb-0.5 shadow-inner overflow-hidden flex items-center px-0.5">
+      {/* Slice-style Round Scroller Track & Fluid Rolling Ball/Capsule */}
+      <div className="relative w-56 sm:w-68 h-2.5 bg-slate-900/90 border border-slate-800 rounded-full mx-auto mt-1 mb-0.5 shadow-inner overflow-hidden flex items-center px-1">
         <div 
-          className="h-1.5 w-[16.666%] rounded-full bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 shadow-[0_0_10px_rgba(56,189,248,0.9)] transition-transform duration-300 ease-out"
-          style={{ transform: `translateX(${activeIndex * 100}%)` }}
+          className="h-2 w-7 rounded-full bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 shadow-[0_0_12px_rgba(56,189,248,0.95)]"
+          style={{
+            marginLeft: `${(displayIndex / (navItems.length - 1)) * 84}%`,
+            transition: dragProgress !== null ? 'none' : 'margin-left 260ms cubic-bezier(0.34, 1.56, 0.64, 1)'
+          }}
         />
       </div>
 

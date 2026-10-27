@@ -1,15 +1,14 @@
 {
-  "version": "2.5.2",
-  "buildDate": "2026-10-27T12:08:00Z",
-  "buildTimestamp": 1793102900000,
-  "title": "VahanGreed ERP v2.5.2",
-  "description": "VahanGreed ERP Branding, Expenses Tab, Round Scroller & Haptic Vibration",
+  "version": "2.5.3",
+  "buildDate": "2026-10-27T12:35:00Z",
+  "buildTimestamp": 1793104800000,
+  "title": "VahanGreed ERP v2.5.3",
+  "description": "Direct Complete Trip Status, Streamlined Trip Table & Slice App Touch Scroller",
   "features": [
-    "Rebranded header to VAHANGREED ERP",
-    "Added Expenses icon to bottom navigation bar for quick cost entry",
-    "Round scroller track and glowing sliding indicator below bottom icons",
-    "Haptic vibration feedback during bottom bar touch scrolling & tab switching",
-    "Customer Name write input enabled by default in Trip Entry form",
-    "Custom profile photo upload & persistent storage"
+    "One-click Trip Completion: All trips directly created and marked as Completed on form submit",
+    "Removed multi-step transit/dispatch statuses; Save & Complete Trip or Complete & Generate Invoice",
+    "Streamlined Trip Details table: removed separate Status & Actions column to prevent horizontal scroll",
+    "Slice app style bottom icon touch scroller with continuous floating orb, scaling & round track runner",
+    "Enhanced tactile haptic vibration feedback gliding across navigation icons"
   ]
 }
