@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Sidebar } from './components/Sidebar';
 import { TopNavbar } from './components/TopNavbar';
+import { BottomNav } from './components/BottomNav';
 import { AuthModal } from './components/AuthModal';
 import { Loading3D } from './components/Loading3D';
 import { OfflineScreen3D } from './components/OfflineScreen3D';
@@ -137,63 +138,75 @@ const AppContent: React.FC = () => {
       {!user ? (
         <AuthModal />
       ) : (
-        <div className="flex h-screen bg-slate-50 overflow-hidden relative">
-          <Sidebar
-            currentTab={currentTab}
-            setCurrentTab={setCurrentTab}
-            isOpen={sidebarOpen}
-            setIsOpen={setSidebarOpen}
+        <div className="flex flex-col h-screen bg-slate-50 overflow-hidden relative">
+          <TopNavbar
+            title={getPageTitle()}
+            onNavigateTab={(tab) => setCurrentTab(tab)}
+            onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+            onShowOfflineModal={() => setShowManualOffline(true)}
+            onShowLoadingModal={() => setShowManualLoading(true)}
           />
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-            <TopNavbar
-              title={getPageTitle()}
-              onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-              onShowOfflineModal={() => setShowManualOffline(true)}
-              onShowLoadingModal={() => setShowManualLoading(true)}
+          <div className="flex flex-1 min-h-0 overflow-hidden relative">
+            <Sidebar
+              currentTab={currentTab}
+              setCurrentTab={setCurrentTab}
+              isOpen={sidebarOpen}
+              setIsOpen={setSidebarOpen}
             />
-            <main className="flex-1 overflow-y-auto">
-              {/* SaaS Admin Views (ONLY FOR SUPER ADMIN) */}
-              {user.is_superadmin && (
-                <>
-                  {currentTab === 'saas-dashboard' && <SaasDashboard onNavigateTab={(tab) => setCurrentTab(tab)} />}
-                  {currentTab === 'saas-accounts' && (
-                    <SaasAccountsPage
-                      onSelectAccount={(orgId) => {
-                        setSelectedAccountId(orgId);
-                        setCurrentTab('saas-account-detail');
-                      }}
-                    />
-                  )}
-                  {currentTab === 'saas-account-detail' && selectedAccountId && (
-                    <SaasAccountDetailPage
-                      orgId={selectedAccountId}
-                      onBack={() => setCurrentTab('saas-accounts')}
-                    />
-                  )}
-                  {currentTab === 'saas-plans' && <SaasPlansPage />}
-                  {currentTab === 'saas-analytics' && <SaasAnalyticsPage />}
-                  {currentTab === 'saas-audit' && <SaasAuditLogsPage />}
-                </>
-              )}
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+              <main className="flex-1 overflow-y-auto pb-16 md:pb-0">
+                {/* SaaS Admin Views (ONLY FOR SUPER ADMIN) */}
+                {user.is_superadmin && (
+                  <>
+                    {currentTab === 'saas-dashboard' && <SaasDashboard onNavigateTab={(tab) => setCurrentTab(tab)} />}
+                    {currentTab === 'saas-accounts' && (
+                      <SaasAccountsPage
+                        onSelectAccount={(orgId) => {
+                          setSelectedAccountId(orgId);
+                          setCurrentTab('saas-account-detail');
+                        }}
+                      />
+                    )}
+                    {currentTab === 'saas-account-detail' && selectedAccountId && (
+                      <SaasAccountDetailPage
+                        orgId={selectedAccountId}
+                        onBack={() => setCurrentTab('saas-accounts')}
+                      />
+                    )}
+                    {currentTab === 'saas-plans' && <SaasPlansPage />}
+                    {currentTab === 'saas-analytics' && <SaasAnalyticsPage />}
+                    {currentTab === 'saas-audit' && <SaasAuditLogsPage />}
+                  </>
+                )}
 
-              {/* Standard Enterprise ERP Views */}
-              {!user.is_superadmin && (
-                <>
-                  {currentTab === 'dashboard' && <Dashboard onNavigateTab={(tab) => setCurrentTab(tab)} />}
-                  {currentTab === 'trips' && <TripsPage />}
-                  {currentTab === 'vehicles' && <VehiclesPage />}
-                  {currentTab === 'drivers' && <DriversPage />}
-                  {currentTab === 'customers' && <CustomersPage />}
-                  {currentTab === 'expenses' && <ExpensesPage />}
-                  {currentTab === 'invoices' && <InvoicesPage />}
-                  {currentTab === 'reports' && <ReportsPage />}
-                  {currentTab === 'staff' && <StaffPage />}
-                  {currentTab === 'subscriptions' && <SubscriptionsPage />}
-                  {currentTab === 'audit' && <AuditPage />}
-                  {currentTab === 'developer' && <DeveloperPage />}
-                </>
-              )}
-            </main>
+                {/* Standard Enterprise ERP Views */}
+                {!user.is_superadmin && (
+                  <>
+                    {currentTab === 'dashboard' && <Dashboard onNavigateTab={(tab) => setCurrentTab(tab)} />}
+                    {currentTab === 'trips' && <TripsPage />}
+                    {currentTab === 'vehicles' && <VehiclesPage />}
+                    {currentTab === 'drivers' && <DriversPage />}
+                    {currentTab === 'customers' && <CustomersPage />}
+                    {currentTab === 'expenses' && <ExpensesPage />}
+                    {currentTab === 'invoices' && <InvoicesPage />}
+                    {currentTab === 'reports' && <ReportsPage />}
+                    {currentTab === 'staff' && <StaffPage />}
+                    {currentTab === 'subscriptions' && <SubscriptionsPage />}
+                    {currentTab === 'audit' && <AuditPage />}
+                    {currentTab === 'developer' && <DeveloperPage />}
+                  </>
+                )}
+              </main>
+              <BottomNav
+                currentTab={currentTab}
+                onNavigateTab={(tab) => {
+                  setCurrentTab(tab);
+                  setSidebarOpen(false);
+                }}
+                onOpenMore={() => setSidebarOpen(!sidebarOpen)}
+                isSidebarOpen={sidebarOpen}
+              />
+            </div>
           </div>
         </div>
       )}

@@ -10,8 +10,8 @@ export interface VersionInfo {
 }
 
 // Current embedded version of this build
-export const CURRENT_APP_VERSION = '2.4.6';
-export const CURRENT_BUILD_TIMESTAMP = 1793052300000;
+export const CURRENT_APP_VERSION = '2.5.0';
+export const CURRENT_BUILD_TIMESTAMP = 1793100300000;
 
 interface UpdateContextType {
   currentVersion: string;

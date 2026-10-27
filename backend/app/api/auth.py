@@ -1,4 +1,4 @@
-﻿from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 import re
@@ -120,6 +120,7 @@ def register_company(data: RegisterCompanyRequest, db: Session = Depends(get_db)
             "id": user.id,
             "email": user.email,
             "full_name": user.full_name,
+            "phone": user.phone,
             "is_superadmin": False
         },
         "organization": {
@@ -127,7 +128,13 @@ def register_company(data: RegisterCompanyRequest, db: Session = Depends(get_db)
             "name": org.name,
             "slug": org.slug,
             "tax_number": org.tax_number,
-            "currency": org.currency
+            "currency": org.currency,
+            "address": org.address,
+            "city": org.city,
+            "state": org.state,
+            "phone": org.phone,
+            "email": org.email,
+            "is_demo": org.is_demo
         },
         "role": {
             "id": owner_role.id,
@@ -210,6 +217,7 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
             "id": user.id,
             "email": user.email,
             "full_name": user.full_name,
+            "phone": user.phone,
             "is_superadmin": False
         },
         "organization": {
@@ -218,6 +226,11 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
             "slug": org.slug,
             "tax_number": org.tax_number,
             "currency": org.currency,
+            "address": org.address,
+            "city": org.city,
+            "state": org.state,
+            "phone": org.phone,
+            "email": org.email,
             "is_demo": org.is_demo
         },
         "role": {

@@ -79,44 +79,31 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, setCurrentTab, isO
 
   return (
     <>
-      {/* Mobile Backdrop */}
+      {/* Backdrop for Drawer (Closes on outside click) */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-slate-900/50 z-40 lg:hidden backdrop-blur-xs"
+          className="fixed inset-0 bg-slate-950/60 z-50 backdrop-blur-xs transition-opacity duration-300"
           onClick={() => setIsOpen(false)}
         />
       )}
 
-      {/* Sidebar Container */}
+      {/* Sidebar Container (Slide-over drawer that stays closed unless More/Menu is clicked) */}
       <aside 
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         className={`
-        fixed lg:static top-0 left-0 z-50 h-screen w-64 bg-slate-900 text-slate-100 flex flex-col
-        transition-transform duration-300 ease-in-out border-r border-slate-800
-        ${isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'}
+        fixed top-0 left-0 z-50 h-screen w-72 sm:w-80 bg-slate-900 text-slate-100 flex flex-col
+        transition-transform duration-300 ease-in-out border-r border-slate-800 shadow-2xl
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
-        {/* Header Branding */}
-        <div className="h-16 flex items-center justify-between px-5 border-b border-slate-800">
-          <div className="flex items-center space-x-3">
-            <div className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white shadow-md ${
-              isSuperadmin ? 'bg-indigo-600 shadow-indigo-500/20' : 'bg-blue-600 shadow-blue-500/20'
-            }`}>
-              {isSuperadmin ? 'SA' : 'TP'}
-            </div>
-            <div>
-              <div className="font-bold text-base tracking-wide text-white">
-                {isSuperadmin ? 'SaaS Admin' : 'TransportPro'}
-              </div>
-              <div className={`text-[11px] font-medium ${isSuperadmin ? 'text-indigo-400' : 'text-blue-400'}`}>
-                {isSuperadmin ? 'Platform Owner Control' : 'Enterprise ERP'}
-              </div>
-            </div>
-          </div>
+        {/* Navigation Drawer Header with Close Button */}
+        <div className="h-14 flex items-center justify-between px-5 border-b border-slate-800">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Navigation Menu</span>
           <button 
-            className="lg:hidden text-slate-400 hover:text-white"
+            className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
             onClick={() => setIsOpen(false)}
+            title="Close Menu"
           >
             <X size={20} />
           </button>

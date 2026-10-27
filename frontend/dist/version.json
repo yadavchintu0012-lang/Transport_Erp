@@ -1,14 +1,15 @@
 {
-  "version": "2.4.6",
-  "buildDate": "2026-10-27T03:25:00Z",
-  "buildTimestamp": 1793052300000,
-  "title": "TransportPro ERP v2.4.6",
-  "description": "Developer Section: Chintu Kumar (B.Tech in AI & DS) & All Rights Reserved",
+  "version": "2.5.0",
+  "buildDate": "2026-10-27T11:25:00Z",
+  "buildTimestamp": 1793100300000,
+  "title": "TransportPro ERP v2.5.0",
+  "description": "Custom Profile Picture, Complete Company Signup Details, Customers Navigation & Modern Highway UI",
   "features": [
-    "New Developer Section under ERP Operations navigation",
-    "Lead Architect Profile: Chintu Kumar, B.Tech in AI & DS (IIMT 1994)",
-    "Comprehensive All Rights Reserved, Copyright & Intellectual Property notice",
-    "System competencies, architectural milestones, and official contact channels",
-    "Notification Center alert for new developer and software updates"
+    "Upload custom profile picture from device with automatic optimization and reset",
+    "Complete Company Signup details (Legal name, GSTIN, Org ID, Headquarters, Dispatch Phone, Email, Plan)",
+    "Customers quick-access tab in bottom navigation bar",
+    "Slide-over navigation drawer opened via 'More' section icon",
+    "Removed academic credentials from top navbar profile header",
+    "Restored multi-graph executive analytics and KPI suite"
   ]
 }
