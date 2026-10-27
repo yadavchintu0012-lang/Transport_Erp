@@ -1,14 +1,15 @@
 {
-  "version": "2.5.1",
-  "buildDate": "2026-10-27T11:38:00Z",
-  "buildTimestamp": 1793101100000,
-  "title": "TransportPro ERP v2.5.1",
-  "description": "Trip Form: Customer Name text input enabled by default with smart suggestions",
+  "version": "2.5.2",
+  "buildDate": "2026-10-27T12:08:00Z",
+  "buildTimestamp": 1793102900000,
+  "title": "VahanGreed ERP v2.5.2",
+  "description": "VahanGreed ERP Branding, Expenses Tab, Round Scroller & Haptic Vibration",
   "features": [
-    "Trip Entry Form: Customer Name writing field is now set and active by default",
-    "Smart datalist suggestions appear automatically as you type",
-    "Toggle to 'Pick from List' available anytime",
-    "Custom Profile Photo upload and persistence",
-    "Customers tab in bottom navigation bar"
+    "Rebranded header to VAHANGREED ERP",
+    "Added Expenses icon to bottom navigation bar for quick cost entry",
+    "Round scroller track and glowing sliding indicator below bottom icons",
+    "Haptic vibration feedback during bottom bar touch scrolling & tab switching",
+    "Customer Name write input enabled by default in Trip Entry form",
+    "Custom profile photo upload & persistent storage"
   ]
 }

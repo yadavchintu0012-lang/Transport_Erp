@@ -250,8 +250,8 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
 
             <div>
               <div className="flex items-center tracking-tight">
-                <span className="text-lg font-black text-white">FLEET</span>
-                <span className="text-lg font-black text-sky-400">FLOW</span>
+                <span className="text-lg font-black text-white">VAHAN</span>
+                <span className="text-lg font-black text-sky-400">GREED</span>
                 <span className="text-lg font-black text-white ml-1">ERP</span>
               </div>
               <p className="text-[11px] font-medium text-sky-200/80 tracking-wide -mt-0.5">
