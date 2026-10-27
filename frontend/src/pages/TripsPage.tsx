@@ -41,8 +41,8 @@ export const TripsPage: React.FC = () => {
   // Edit trip state
   const [editingTripId, setEditingTripId] = useState<string | null>(null);
 
-  // Write customer name toggle state
-  const [isWritingCustomer, setIsWritingCustomer] = useState(false);
+  // Write customer name toggle state (default to true as requested)
+  const [isWritingCustomer, setIsWritingCustomer] = useState(true);
   const [customerInputName, setCustomerInputName] = useState('');
 
   // Form state
@@ -153,7 +153,7 @@ export const TripsPage: React.FC = () => {
     const cId = t.customer?.id || t.customer_id || '';
     const cName = t.customer?.name || '';
     setCustomerInputName(cName);
-    setIsWritingCustomer(false);
+    setIsWritingCustomer(true);
     setFormData({
       trip_date: t.trip_date ? t.trip_date.split('T')[0] : new Date().toISOString().split('T')[0],
       customer_id: cId,
@@ -239,7 +239,7 @@ export const TripsPage: React.FC = () => {
 
       setShowAddModal(false);
       setEditingTripId(null);
-      setIsWritingCustomer(false);
+      setIsWritingCustomer(true);
       setCustomerInputName('');
       fetchTrips();
 
@@ -354,7 +354,7 @@ export const TripsPage: React.FC = () => {
             <button
               onClick={() => {
                 setEditingTripId(null);
-                setIsWritingCustomer(false);
+                setIsWritingCustomer(true);
                 setCustomerInputName('');
                 setShowAddModal(true);
               }}
